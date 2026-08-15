@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect, useRef, useMemo, useCallback } from 'react';
 import type { CafePublic, Category, MenuItem, CartItem, CoffeeProfile, SelectedModifier } from '@/types';
-import { getThemeCssString } from '@/lib/themes';
+import { getThemeCssString, getTheme } from '@/lib/themes';
 import { useParams } from 'next/navigation';
 import { 
   Coffee, ShoppingBag, Plus, Minus, X, ChevronDown, ChevronUp, 
@@ -590,12 +590,22 @@ export default function CafeMenuPage({ params }: { params?: Promise<{ cafeSlug: 
     return <div className="flex h-screen items-center justify-center rtl">کافه پیدا نشد</div>;
   }
 
-  // Inject Theme styles via <style>
+  // Inject Theme styles
+  const activeTheme = getTheme(cafe.themeId || cafe.theme || 'NORDIC_MINIMAL');
   const themeCss = getThemeCssString ? getThemeCssString(cafe.themeId || cafe.theme || 'NORDIC_MINIMAL') : '';
 
   return (
-    <div className="min-h-screen bg-[var(--theme-bg)] text-[var(--theme-text)] font-sans rtl" style={{ direction: 'rtl' }}>
-      {themeCss && <style dangerouslySetInnerHTML={{ __html: `:root { ${themeCss} }` }} />}
+    <div 
+      className="min-h-screen font-sans rtl" 
+      style={{ 
+        direction: 'rtl',
+        backgroundColor: activeTheme.preview.bg,
+        color: activeTheme.preview.text,
+        minHeight: '100vh',
+        ...(activeTheme.cssVars as React.CSSProperties),
+      }}
+    >
+      {themeCss && <style dangerouslySetInnerHTML={{ __html: `:root, body { ${themeCss} }` }} />}
       
       {/* View Only Banner */}
       {cafe.workflowMode === 'VIEW_ONLY' && (
