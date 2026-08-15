@@ -1,0 +1,7 @@
+[build]
+  command = "npx prisma generate && npx tsx prisma/seed.ts && next build"
+  publish = ".next"
+
+[build.environment]
+  NODE_VERSION = "20"
+  NEXT_USE_NETLIFY_EDGE = "true"
