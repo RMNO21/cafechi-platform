@@ -32,9 +32,50 @@ const THEME_LABELS: Record<string, string> = {
   BRUNCH: "برانچ",
 };
 
+const FALLBACK_DISCOVERY_CAFES: any[] = [
+  {
+    id: "cmsuloxwv00055su40cryzwit",
+    name: "روستری کالکتیو",
+    slug: "roastery-collective",
+    description: "یک فضای مینیمال و مدرن برای دوستداران قهوه تخصصی. از منشأ دان تا فنجان، هر مرحله با دقت انجام می‌شود.",
+    address: "تهران، خیابان ولیعصر، پلاک ۴۵۲",
+    phoneNumber: "02188776655",
+    latitude: 35.7219,
+    longitude: 51.3347,
+    businessType: "SPECIALTY_CAFE",
+    workflowMode: "PAY_UPFRONT_BUZZER",
+    themeId: "NORDIC_MINIMAL",
+    isOpenNow: true,
+    isApproved: true,
+    isActive: true,
+    distance: 1.2,
+    amenities: { wifi: true, smoking: false, outdoor: false, board_games: false, work_friendly: true, pet_friendly: false },
+    categories: []
+  },
+  {
+    id: "cmsuloxx200065su486rbxpb5",
+    name: "نوآر سوشال کلاب",
+    slug: "noir-social-club",
+    description: "بار تخصصی قهوه شبانه با فضای دارک و آتمسفر خاص. محیطی ایده‌آل برای جلسات خلاقانه و ملاقات‌های شبانه.",
+    address: "تهران، الهیه، خیابان فرشته، کوچه سوم",
+    phoneNumber: "02122345678",
+    latitude: 35.7891,
+    longitude: 51.4156,
+    businessType: "CAFE_BAR",
+    workflowMode: "TABLE_TAB_SPLIT",
+    themeId: "OLED_CARBON",
+    isOpenNow: true,
+    isApproved: true,
+    isActive: true,
+    distance: 3.4,
+    amenities: { wifi: true, smoking: true, outdoor: true, board_games: false, work_friendly: false, pet_friendly: true },
+    categories: []
+  }
+];
+
 export default function DiscoveryPage() {
-  const [cafes, setCafes] = useState<DiscoveryCafe[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [cafes, setCafes] = useState<DiscoveryCafe[]>(FALLBACK_DISCOVERY_CAFES);
+  const [loading, setLoading] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [viewMode, setViewMode] = useState<"list" | "map">("list");
   const [userLocation, setUserLocation] = useState<{ lat: number; lng: number } | null>(null);

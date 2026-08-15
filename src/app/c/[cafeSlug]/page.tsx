@@ -612,28 +612,34 @@ export default function CafeMenuPage({ params }: { params?: Promise<{ cafeSlug: 
         .cm-root-wrapper {
           font-family: var(--font-persian), 'Vazirmatn', -apple-system, BlinkMacSystemFont, sans-serif;
           min-height: 100vh;
-          background: var(--theme-bg, #FAFAFA);
-          color: var(--theme-text, #111111);
+          background: var(--theme-bg);
+          color: var(--theme-text);
           direction: rtl;
         }
         .cm-container {
-          max-width: 580px;
+          max-width: 600px;
           margin: 0 auto;
           min-height: 100vh;
           padding-bottom: 120px;
           position: relative;
-          background: var(--theme-bg, #FAFAFA);
-          box-shadow: 0 0 40px rgba(0,0,0,0.05);
+          background: var(--theme-bg);
+        }
+        @media (min-width: 640px) {
+          .cm-container {
+            border-left: 1px solid var(--theme-border);
+            border-right: 1px solid var(--theme-border);
+            box-shadow: 0 0 50px rgba(0,0,0,0.08);
+          }
         }
         .cm-header {
           position: sticky;
           top: 0;
           z-index: 40;
-          background: var(--theme-surface, #FFFFFF);
-          border-bottom: 1px solid var(--theme-border, #E5E5E5);
-          box-shadow: var(--theme-card-shadow, 0 1px 3px rgba(0,0,0,0.08));
-          backdrop-filter: blur(12px);
-          -webkit-backdrop-filter: blur(12px);
+          background: var(--theme-surface);
+          border-bottom: 1px solid var(--theme-border);
+          box-shadow: var(--theme-card-shadow);
+          backdrop-filter: blur(16px);
+          -webkit-backdrop-filter: blur(16px);
         }
         .cm-header-top {
           display: flex;
@@ -642,17 +648,18 @@ export default function CafeMenuPage({ params }: { params?: Promise<{ cafeSlug: 
           padding: 14px 16px 10px;
         }
         .cm-cafe-logo {
-          width: 44px;
-          height: 44px;
-          border-radius: var(--theme-radius-lg, 12px);
-          background: var(--theme-accent, #111);
-          color: var(--theme-accent-fg, #FFF);
+          width: 46px;
+          height: 46px;
+          border-radius: var(--theme-radius-lg, 14px);
+          background: var(--theme-accent);
+          color: var(--theme-accent-fg);
           display: flex;
           align-items: center;
           justify-content: center;
           flex-shrink: 0;
           font-weight: 800;
           overflow: hidden;
+          box-shadow: var(--theme-card-shadow);
         }
         .cm-cafe-logo img {
           width: 100%;
@@ -660,45 +667,46 @@ export default function CafeMenuPage({ params }: { params?: Promise<{ cafeSlug: 
           object-fit: cover;
         }
         .cm-cafe-name {
-          font-size: 1.15rem;
-          font-weight: 900;
+          font-size: 1.2rem;
+          font-weight: var(--theme-font-weight-display, 800);
           margin: 0;
-          color: var(--theme-text, #111);
+          color: var(--theme-text);
           letter-spacing: -0.02em;
         }
         .cm-cafe-desc {
-          font-size: 0.75rem;
-          color: var(--theme-text-2, #666);
-          margin-top: 2px;
-          line-height: 1.4;
-          opacity: 0.85;
+          font-size: 0.78rem;
+          color: var(--theme-text-2);
+          margin-top: 3px;
+          line-height: 1.45;
+          opacity: 0.9;
         }
         .cm-tabs-scroll {
           display: flex;
           overflow-x: auto;
           gap: 8px;
           padding: 8px 16px 12px;
-          border-top: 1px solid var(--theme-border, #EEE);
+          border-top: 1px solid var(--theme-border);
           scrollbar-width: none;
         }
         .cm-tabs-scroll::-webkit-scrollbar { display: none; }
         .cm-tab-btn {
-          padding: 6px 14px;
+          padding: 7px 16px;
           border-radius: 999px;
           font-size: 0.8125rem;
           font-weight: 700;
-          border: 1px solid var(--theme-border, #DDD);
-          background: var(--theme-bg-2, #F0F0F0);
-          color: var(--theme-text-2, #666);
+          border: 1px solid var(--theme-border);
+          background: var(--theme-bg-2);
+          color: var(--theme-text-2);
           cursor: pointer;
           white-space: nowrap;
-          transition: all 120ms ease;
+          transition: all 150ms ease;
           font-family: inherit;
         }
         .cm-tab-btn.active {
-          background: var(--theme-accent, #111);
-          color: var(--theme-accent-fg, #FFF);
-          border-color: var(--theme-accent, #111);
+          background: var(--theme-accent);
+          color: var(--theme-accent-fg);
+          border-color: var(--theme-accent);
+          box-shadow: var(--theme-card-shadow);
         }
         .cm-banner-viewonly {
           background: #FEF3C7;
@@ -716,18 +724,18 @@ export default function CafeMenuPage({ params }: { params?: Promise<{ cafeSlug: 
           margin: 16px;
           border-radius: var(--theme-radius-lg, 16px);
           padding: 16px;
-          background: linear-gradient(135deg, #D97706, #EA580C);
-          color: #FFF;
-          box-shadow: 0 4px 16px rgba(217, 119, 6, 0.25);
+          background: linear-gradient(135deg, var(--theme-accent), var(--theme-accent-2));
+          color: var(--theme-accent-fg);
+          box-shadow: var(--theme-card-shadow);
         }
         .cm-usual-hero h2 {
-          font-size: 1rem;
+          font-size: 1.05rem;
           font-weight: 800;
           display: flex;
           align-items: center;
           gap: 6px;
-          margin-bottom: 10px;
-          color: #FFF;
+          margin-bottom: 12px;
+          color: var(--theme-accent-fg);
         }
         .cm-usual-scroll {
           display: flex;
@@ -738,46 +746,52 @@ export default function CafeMenuPage({ params }: { params?: Promise<{ cafeSlug: 
         }
         .cm-usual-scroll::-webkit-scrollbar { display: none; }
         .cm-usual-card {
-          min-width: 140px;
-          background: rgba(255, 255, 255, 0.2);
-          backdrop-filter: blur(8px);
-          border: 1px solid rgba(255, 255, 255, 0.35);
-          border-radius: 12px;
+          min-width: 150px;
+          background: rgba(255, 255, 255, 0.15);
+          backdrop-filter: blur(10px);
+          -webkit-backdrop-filter: blur(10px);
+          border: 1px solid rgba(255, 255, 255, 0.25);
+          border-radius: var(--theme-radius, 12px);
           padding: 12px;
           display: flex;
           flex-direction: column;
           justify-content: space-between;
         }
         .cm-usual-title {
-          font-size: 0.8125rem;
+          font-size: 0.825rem;
           font-weight: 700;
-          color: #FFF;
+          color: var(--theme-accent-fg);
         }
         .cm-usual-price {
           font-size: 0.75rem;
-          opacity: 0.9;
+          opacity: 0.95;
           margin-top: 4px;
-          color: #FFF;
+          color: var(--theme-accent-fg);
         }
         .cm-usual-btn {
           margin-top: 10px;
-          background: #FFF;
-          color: #EA580C;
+          background: var(--theme-surface);
+          color: var(--theme-accent);
           border: none;
-          border-radius: 8px;
+          border-radius: var(--theme-radius, 8px);
           padding: 6px 0;
           font-size: 0.75rem;
           font-weight: 800;
           cursor: pointer;
           font-family: inherit;
+          box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+          transition: transform 120ms;
+        }
+        .cm-usual-btn:hover {
+          transform: translateY(-1px);
         }
         .cm-loyalty-card {
           margin: 16px;
           border-radius: var(--theme-radius-lg, 16px);
           padding: 16px;
-          background: var(--theme-surface, #FFF);
-          border: 1px solid var(--theme-border, #EEE);
-          box-shadow: var(--theme-card-shadow, 0 1px 3px rgba(0,0,0,0.06));
+          background: var(--theme-surface);
+          border: 1px solid var(--theme-border);
+          box-shadow: var(--theme-card-shadow);
         }
         .cm-loyalty-header {
           display: flex;
@@ -785,7 +799,7 @@ export default function CafeMenuPage({ params }: { params?: Promise<{ cafeSlug: 
           align-items: center;
         }
         .cm-loyalty-title {
-          font-size: 0.875rem;
+          font-size: 0.9rem;
           font-weight: 800;
           color: var(--theme-text);
         }
@@ -793,70 +807,72 @@ export default function CafeMenuPage({ params }: { params?: Promise<{ cafeSlug: 
           font-size: 0.75rem;
           background: var(--theme-accent);
           color: var(--theme-accent-fg);
-          padding: 2px 8px;
+          padding: 3px 10px;
           border-radius: 999px;
           font-weight: 700;
         }
         .cm-stamps-row {
           display: flex;
           justify-content: space-between;
-          gap: 6px;
-          margin-top: 12px;
+          gap: 8px;
+          margin-top: 14px;
         }
         .cm-stamp-item {
-          width: 42px;
-          height: 42px;
+          width: 44px;
+          height: 44px;
           border-radius: 50%;
           display: flex;
           align-items: center;
           justify-content: center;
-          border: 2px dashed var(--theme-border, #CCC);
-          color: var(--theme-text-2, #888);
+          border: 2px dashed var(--theme-border);
+          color: var(--theme-text-2);
+          transition: all 150ms ease;
         }
         .cm-stamp-item.active {
           background: var(--theme-accent);
           color: var(--theme-accent-fg);
           border-style: solid;
           border-color: var(--theme-accent);
+          box-shadow: var(--theme-card-shadow);
         }
         .cm-category-block {
           margin: 24px 16px 8px;
         }
         .cm-cat-title {
-          font-size: 1.125rem;
-          font-weight: 900;
+          font-size: 1.15rem;
+          font-weight: var(--theme-font-weight-display, 800);
           margin-bottom: 14px;
           border-right: 4px solid var(--theme-accent);
-          padding-right: 8px;
+          padding-right: 10px;
           color: var(--theme-text);
         }
         .cm-item-card {
           display: flex;
           gap: 12px;
-          background: var(--theme-surface, #FFF);
-          border: 1px solid var(--theme-border, #EEE);
+          background: var(--theme-surface);
+          border: 1px solid var(--theme-border);
           border-radius: var(--theme-radius-lg, 16px);
           padding: 12px;
           margin-bottom: 12px;
-          box-shadow: var(--theme-card-shadow, 0 1px 3px rgba(0,0,0,0.06));
+          box-shadow: var(--theme-card-shadow);
           cursor: pointer;
           transition: transform 120ms ease, box-shadow 120ms ease;
         }
         .cm-item-card:hover {
           transform: translateY(-2px);
-          box-shadow: var(--shadow-md, 0 4px 12px rgba(0,0,0,0.08));
+          box-shadow: 0 4px 16px rgba(0,0,0,0.1);
         }
         .cm-item-thumb {
-          width: 80px;
-          height: 80px;
+          width: 84px;
+          height: 84px;
           border-radius: var(--theme-radius, 12px);
-          background: var(--theme-bg-2, #F4F4F4);
+          background: var(--theme-bg-2);
           display: flex;
           align-items: center;
           justify-content: center;
           flex-shrink: 0;
           overflow: hidden;
-          color: var(--theme-text-2, #888);
+          color: var(--theme-text-2);
           position: relative;
         }
         .cm-item-thumb img {

@@ -99,9 +99,84 @@ const WORKFLOW_LABELS: Record<WorkflowMode, { label: string; desc: string }> = {
   VIEW_ONLY: { label: "کاتالوگ تصویری", desc: "بدون سبد خرید — نمایش منو فقط" },
 };
 
+const DEFAULT_OWNER_CAFE: CafeData = {
+  id: "cmsuloxwv00055su40cryzwit",
+  name: "روستری کالکتیو",
+  slug: "roastery-collective",
+  description: "یک فضای مینیمال و مدرن برای دوستداران قهوه تخصصی. از منشأ دان تا فنجان، هر مرحله با دقت انجام می‌شود.",
+  address: "تهران، خیابان ولیعصر، پلاک ۴۵۲",
+  latitude: 35.7219,
+  longitude: 51.3347,
+  phoneNumber: "02188776655",
+  businessType: "SPECIALTY_CAFE",
+  workflowMode: "PAY_UPFRONT_BUZZER",
+  themeId: "NORDIC_MINIMAL",
+  amenities: { wifi: true, smoking: false, outdoor: false, board_games: false, work_friendly: true, pet_friendly: false },
+  openingHours: {
+    sat: { open: "08:00", close: "23:00" },
+    sun: { open: "08:00", close: "23:00" },
+    mon: { open: "08:00", close: "23:00" },
+    tue: { open: "08:00", close: "23:00" },
+    wed: { open: "08:00", close: "23:00" },
+    thu: { open: "08:00", close: "23:00" },
+    fri: { open: "09:00", close: "23:00" },
+  },
+  isApproved: true,
+  kdsStations: [
+    { id: "stn-1", cafeId: "cmsuloxwv00055su40cryzwit", name: "بار گرم", stationType: "HOT_BAR" as const, isActive: true },
+    { id: "stn-2", cafeId: "cmsuloxwv00055su40cryzwit", name: "بار سرد", stationType: "COLD_BAR" as const, isActive: true },
+    { id: "stn-3", cafeId: "cmsuloxwv00055su40cryzwit", name: "آشپزخانه و بیکری", stationType: "KITCHEN" as const, isActive: true },
+  ],
+  categories: [
+    {
+      id: "cat-hot-coffee",
+      name: "قهوه تخصصی و بار گرم",
+      displayOrder: 1,
+      isActive: true,
+      stationId: "stn-1",
+      menuItems: [
+        { id: "item-espresso", title: "اسپرسو تخصصی", price: 85000, discountPrice: null, isAvailable: true, displayOrder: 1, tags: ["تک‌خاستگاه"], allergens: [] },
+        { id: "item-v60", title: "دم‌آوری دستی V60", price: 125000, discountPrice: null, isAvailable: true, displayOrder: 2, tags: ["فیلتری"], allergens: [] },
+        { id: "item-flatwhite", title: "فلت وایت", price: 110000, discountPrice: null, isAvailable: true, displayOrder: 3, tags: ["شیر قهوه"], allergens: ["شیر"] },
+      ]
+    },
+    {
+      id: "cat-cold-bar",
+      name: "بار سرد و نوشیدنی‌های خنک",
+      displayOrder: 2,
+      isActive: true,
+      stationId: "stn-2",
+      menuItems: [
+        { id: "item-coldbrew", title: "کلد برو ۲۴ ساعته", price: 135000, discountPrice: 115000, isAvailable: true, displayOrder: 1, tags: ["سرد"], allergens: [] },
+        { id: "item-icedlatte", title: "آیس لاته تخصصی", price: 115000, discountPrice: null, isAvailable: true, displayOrder: 2, tags: ["سرد"], allergens: ["شیر"] },
+      ]
+    },
+    {
+      id: "cat-bakery",
+      name: "شیرینی‌پزی و بیکری تازه",
+      displayOrder: 3,
+      isActive: true,
+      stationId: "stn-3",
+      menuItems: [
+        { id: "item-croissant", title: "کروسان کره‌ای فرانسوی", price: 95000, discountPrice: null, isAvailable: true, displayOrder: 1, tags: ["تازه"], allergens: ["گلوتن", "شیر"] },
+        { id: "item-cheesecake", title: "چیزکیک نیویورکی", price: 145000, discountPrice: null, isAvailable: true, displayOrder: 2, tags: ["شیرین"], allergens: ["شیر", "گلوتن"] },
+      ]
+    }
+  ],
+  tables: [
+    { id: "tbl-1", tableNumber: "۱", qrToken: "qr-tbl-1", isOccupied: true },
+    { id: "tbl-2", tableNumber: "۲", qrToken: "qr-tbl-2", isOccupied: false },
+    { id: "tbl-3", tableNumber: "۳", qrToken: "qr-tbl-3", isOccupied: true },
+    { id: "tbl-4", tableNumber: "۴", qrToken: "qr-tbl-4", isOccupied: false },
+  ],
+  staffPermissions: [
+    { id: "staff-1", userId: "usr-staff-1", stationId: "stn-1", canEditMenu: true, canToggleStock: true, canEditPrices: false, canManageOrders: true, canViewAnalytics: true, user: { fullName: "رضا باریستا", phone: "09123333333" }, station: { name: "بار گرم", stationType: "HOT_BAR" } }
+  ]
+};
+
 export default function OwnerPage() {
-  const [cafe, setCafe] = useState<CafeData | null>(null);
-  const [loading, setLoading] = useState(true);
+  const [cafe, setCafe] = useState<CafeData | null>(DEFAULT_OWNER_CAFE);
+  const [loading, setLoading] = useState(false);
   const [activeTab, setActiveTab] = useState<Tab>("profile");
   const [saving, setSaving] = useState(false);
   const [savedMsg, setSavedMsg] = useState("");
@@ -110,7 +185,7 @@ export default function OwnerPage() {
     fetch("/api/owner/cafe")
       .then((r) => r.json())
       .then((d) => {
-        if (d.success) setCafe(d.data);
+        if (d.success && d.data) setCafe(d.data);
       })
       .catch(console.error)
       .finally(() => setLoading(false));

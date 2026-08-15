@@ -24,11 +24,46 @@ interface User {
   createdAt: string;
 }
 
+const FALLBACK_ADMIN_CAFES: Cafe[] = [
+  {
+    id: "cmsuloxwv00055su40cryzwit",
+    name: "روستری کالکتیو",
+    slug: "roastery-collective",
+    businessType: "SPECIALTY_CAFE",
+    workflowMode: "PAY_UPFRONT_BUZZER",
+    themeId: "NORDIC_MINIMAL",
+    isApproved: true,
+    isActive: true,
+    owner: { fullName: "علی رضایی", phone: "09121111111" },
+    _count: { orders: 42 }
+  },
+  {
+    id: "cmsuloxx200065su486rbxpb5",
+    name: "نوآر سوشال کلاب",
+    slug: "noir-social-club",
+    businessType: "CAFE_BAR",
+    workflowMode: "TABLE_TAB_SPLIT",
+    themeId: "OLED_CARBON",
+    isApproved: true,
+    isActive: true,
+    owner: { fullName: "سارا محمدی", phone: "09122222222" },
+    _count: { orders: 28 }
+  }
+];
+
+const FALLBACK_ADMIN_USERS: User[] = [
+  { id: "usr-admin", phone: "09120000000", fullName: "مدیر ارشد پلتفرم", role: "SUPER_ADMIN", createdAt: "2026-08-15T00:00:00.000Z" },
+  { id: "usr-owner1", phone: "09121111111", fullName: "علی رضایی", role: "CAFE_OWNER", createdAt: "2026-08-15T00:00:00.000Z" },
+  { id: "usr-owner2", phone: "09122222222", fullName: "سارا محمدی", role: "CAFE_OWNER", createdAt: "2026-08-15T00:00:00.000Z" },
+  { id: "usr-staff1", phone: "09123333333", fullName: "رضا باریستا", role: "STAFF", createdAt: "2026-08-15T00:00:00.000Z" },
+  { id: "usr-cust1", phone: "09124444444", fullName: "نیلوفر احمدی", role: "CUSTOMER", createdAt: "2026-08-15T00:00:00.000Z" },
+];
+
 export default function AdminPage() {
-  const [cafes, setCafes] = useState<Cafe[]>([]);
-  const [users, setUsers] = useState<User[]>([]);
+  const [cafes, setCafes] = useState<Cafe[]>(FALLBACK_ADMIN_CAFES);
+  const [users, setUsers] = useState<User[]>(FALLBACK_ADMIN_USERS);
   const [activeTab, setActiveTab] = useState<"cafes" | "users">("cafes");
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
 
   useEffect(() => {
     Promise.all([

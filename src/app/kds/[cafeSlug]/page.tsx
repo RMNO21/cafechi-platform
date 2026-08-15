@@ -24,11 +24,55 @@ interface PageProps {
   params: Promise<{ cafeSlug: string }>;
 }
 
+const FALLBACK_KDS_ORDERS: any[] = [
+  {
+    id: "ord-101",
+    orderCode: "A-101",
+    code: "A-101",
+    buzzerNumber: 12,
+    status: "CONFIRMED",
+    createdAt: new Date(Date.now() - 3 * 60 * 1000).toISOString(),
+    totalAmount: 210000,
+    paymentMode: "PAY_UPFRONT_BUZZER",
+    orderItems: [
+      { id: "oi-1", quantity: 1, unitPrice: 85000, totalPrice: 85000, stationStatus: "IN_PROGRESS", stationType: "HOT_BAR", item: { id: "item-espresso", title: "اسپرسو تخصصی (اتیوپی)" } },
+      { id: "oi-2", quantity: 1, unitPrice: 125000, totalPrice: 125000, stationStatus: "PENDING", stationType: "HOT_BAR", item: { id: "item-v60", title: "دم‌آوری دستی V60 (کنیا)" } },
+    ]
+  },
+  {
+    id: "ord-102",
+    orderCode: "B-102",
+    code: "B-102",
+    buzzerNumber: 5,
+    status: "IN_PREPARATION",
+    createdAt: new Date(Date.now() - 7 * 60 * 1000).toISOString(),
+    totalAmount: 230000,
+    paymentMode: "PAY_AT_COUNTER",
+    orderItems: [
+      { id: "oi-3", quantity: 1, unitPrice: 135000, totalPrice: 135000, stationStatus: "IN_PROGRESS", stationType: "COLD_BAR", item: { id: "item-coldbrew", title: "کلد برو ۲۴ ساعته" } },
+      { id: "oi-4", quantity: 1, unitPrice: 95000, totalPrice: 95000, stationStatus: "DONE", stationType: "PASTRY", item: { id: "item-croissant", title: "کروسان کره‌ای" } },
+    ]
+  },
+  {
+    id: "ord-103",
+    orderCode: "C-103",
+    code: "C-103",
+    tableNumber: "۴",
+    status: "READY",
+    createdAt: new Date(Date.now() - 11 * 60 * 1000).toISOString(),
+    totalAmount: 145000,
+    paymentMode: "TABLE_TAB_SPLIT",
+    orderItems: [
+      { id: "oi-5", quantity: 1, unitPrice: 145000, totalPrice: 145000, stationStatus: "DONE", stationType: "PASTRY", item: { id: "item-cheesecake", title: "چیزکیک نیویورکی" } },
+    ]
+  }
+];
+
 export default function KDSPage(props: PageProps) {
   const params = use(props.params);
   const cafeSlug = params.cafeSlug;
 
-  const [orders, setOrders] = useState<Order[]>([]);
+  const [orders, setOrders] = useState<Order[]>(FALLBACK_KDS_ORDERS);
   const [station, setStation] = useState<Station>('ALL');
   const [now, setNow] = useState(Date.now());
   const [tableServices, setTableServices] = useState<TableServiceRequest[]>([]);
