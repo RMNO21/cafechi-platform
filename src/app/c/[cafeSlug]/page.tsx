@@ -3,6 +3,7 @@
 import React, { useState, useEffect, useRef, useMemo, useCallback } from 'react';
 import type { CafePublic, Category, MenuItem, CartItem, CoffeeProfile, SelectedModifier } from '@/types';
 import { getThemeCssString } from '@/lib/themes';
+import { useParams } from 'next/navigation';
 import { 
   Coffee, ShoppingBag, Plus, Minus, X, ChevronDown, ChevronUp, 
   Bell, Receipt, Droplets, CreditCard, Star, AlertTriangle, Info, Check 
@@ -71,8 +72,10 @@ const CoffeeRadar = ({ profile }: { profile: CoffeeProfile }) => {
 
 // --- Main Page Component ---
 
-export default function CafeMenuPage({ params }: { params: Promise<{ cafeSlug: string }> }) {
-  const [cafeSlug, setCafeSlug] = useState<string>('');
+export default function CafeMenuPage({ params }: { params?: Promise<{ cafeSlug: string }> }) {
+  const routerParams = useParams();
+  const routeSlug = (routerParams?.cafeSlug as string) || '';
+  const [cafeSlug, setCafeSlug] = useState<string>(routeSlug);
   const [cafe, setCafe] = useState<CafePublic | null>(null);
   const [theUsual, setTheUsual] = useState<MenuItem[]>([]);
   const [loading, setLoading] = useState(true);
@@ -91,14 +94,19 @@ export default function CafeMenuPage({ params }: { params: Promise<{ cafeSlug: s
 
   // Parse params
   useEffect(() => {
-    params.then((p) => {
-      setCafeSlug(p.cafeSlug);
-    });
-  }, [params]);
+    if (routeSlug) {
+      setCafeSlug(routeSlug);
+    } else if (params) {
+      params.then((p) => {
+        if (p?.cafeSlug) setCafeSlug(p.cafeSlug);
+      }).catch(() => {});
+    }
+  }, [routeSlug, params]);
 
   // Fetch Data
   useEffect(() => {
     if (!cafeSlug) return;
+    let isMounted = true;
     const loadData = async () => {
       try {
         setLoading(true);
@@ -108,23 +116,30 @@ export default function CafeMenuPage({ params }: { params: Promise<{ cafeSlug: s
         ]);
         
         if (cafeRes.ok) {
-          const cafeData = await cafeRes.json();
-          setCafe(cafeData);
-          if (cafeData.categories && cafeData.categories.length > 0) {
-            setActiveCategory(cafeData.categories[0].id);
+          const raw = await cafeRes.json();
+          const cafeData = raw.data || raw;
+          if (isMounted) {
+            setCafe(cafeData);
+            if (cafeData.categories && cafeData.categories.length > 0) {
+              setActiveCategory(cafeData.categories[0].id);
+            }
           }
         }
         if (usualRes.ok) {
-          const usualData = await usualRes.json();
-          setTheUsual(usualData.slice(0, 3)); // Top 3
+          const usualRaw = await usualRes.json();
+          const usualData = usualRaw.data || usualRaw;
+          if (isMounted && Array.isArray(usualData)) {
+            setTheUsual(usualData.slice(0, 3)); // Top 3
+          }
         }
       } catch (err) {
         console.error('Error fetching cafe data', err);
       } finally {
-        setLoading(false);
+        if (isMounted) setLoading(false);
       }
     };
     loadData();
+    return () => { isMounted = false; };
   }, [cafeSlug]);
 
   // Scroll Spy setup
