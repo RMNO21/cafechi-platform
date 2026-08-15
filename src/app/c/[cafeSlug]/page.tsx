@@ -70,16 +70,290 @@ const CoffeeRadar = ({ profile }: { profile: CoffeeProfile }) => {
   );
 };
 
+const FALLBACK_CAFES: Record<string, CafePublic> = {
+  'roastery-collective': {
+    id: 'cmsuloxwv00055su40cryzwit',
+    name: 'روستری کالکتیو',
+    slug: 'roastery-collective',
+    description: 'یک فضای مینیمال و مدرن برای دوستداران قهوه تخصصی. از منشأ دان تا فنجان، هر مرحله با دقت انجام می‌شود.',
+    address: 'تهران، خیابان ولیعصر، پلاک ۴۵۲',
+    phoneNumber: '02188776655',
+    latitude: 35.7219,
+    longitude: 51.3347,
+    businessType: 'SPECIALTY_CAFE',
+    workflowMode: 'PAY_UPFRONT_BUZZER',
+    themeId: 'NORDIC_MINIMAL',
+    theme: 'NORDIC_MINIMAL',
+    isOpenNow: true,
+    isApproved: true,
+    isActive: true,
+    loyaltyProgram: true,
+    stampsCount: 3,
+    categories: [
+      {
+        id: 'cat-hot-coffee',
+        name: 'قهوه تخصصی و بار گرم',
+        displayOrder: 1,
+        isActive: true,
+        menuItems: [
+          {
+            id: 'item-espresso',
+            title: 'اسپرسو تخصصی',
+            name: 'اسپرسو تخصصی',
+            description: 'سینگل اوریجین اتیوپی یرگاچف — عصاره‌گیری با پروفایل دمایی دقیق',
+            price: 85000,
+            discountPrice: null,
+            isAvailable: true,
+            displayOrder: 1,
+            tags: ['تک‌خاستگاه', 'اسپشیالتی', 'شسته‌شده'],
+            allergens: [],
+            coffeeProfile: {
+              origin: 'اتیوپی یرگاچف',
+              altitude: '1900-2200 متر',
+              process: 'شسته‌شده (Washed)',
+              roastLevel: 'روشن (Light)',
+              radar: { acidity: 9, body: 5, sweetness: 8, bitterness: 2, aroma: 10 },
+              flavorNotes: ['یاس', 'ترنج', 'مرکبات', 'هلو']
+            },
+            modifierGroups: [
+              {
+                id: 'mod-espresso-beans',
+                name: 'انتخاب دان قهوه',
+                isRequired: true,
+                minSelection: 1,
+                maxSelection: 1,
+                options: [
+                  { id: 'opt-ethiopia', name: 'اتیوپی یرگاچف (تک‌خاستگاه)', priceDelta: 0, isDefault: true },
+                  { id: 'opt-colombia', name: 'کلمبیا ال‌پارایزو (تخمیری)', priceDelta: 20000, isDefault: false }
+                ]
+              }
+            ]
+          },
+          {
+            id: 'item-v60',
+            title: 'دم‌آوری دستی V60',
+            name: 'دم‌آوری دستی V60',
+            description: 'قهوه فیلتری دمی با شفافیت طعمی بی‌نظیر و نُت‌های میوه‌ای درخشان',
+            price: 125000,
+            discountPrice: null,
+            isAvailable: true,
+            displayOrder: 2,
+            tags: ['فیلتری', 'کم‌چگال', 'پیچیده'],
+            allergens: [],
+            coffeeProfile: {
+              origin: 'کنیا نیری',
+              altitude: '1700-1900 متر',
+              process: 'شسته‌شده دوگانه',
+              roastLevel: 'فیلتر برشت (Light-Medium)',
+              radar: { acidity: 9, body: 4, sweetness: 8, bitterness: 2, aroma: 9 },
+              flavorNotes: ['توت‌فرنگی وحشی', 'گریپ‌فروت', 'عسل']
+            },
+            modifierGroups: []
+          },
+          {
+            id: 'item-flatwhite',
+            title: 'فلت وایت',
+            name: 'فلت وایت',
+            description: 'دابل ریسترتو با شیر بخار داده شده با میکروفوم ابریشمی',
+            price: 110000,
+            discountPrice: null,
+            isAvailable: true,
+            displayOrder: 3,
+            tags: ['شیر قهوه', 'میکروفوم'],
+            allergens: ['شیر'],
+            coffeeProfile: null,
+            modifierGroups: [
+              {
+                id: 'mod-milk-type',
+                name: 'نوع شیر',
+                isRequired: false,
+                minSelection: 0,
+                maxSelection: 1,
+                options: [
+                  { id: 'opt-regular-milk', name: 'شیر کامل پاستوریزه', priceDelta: 0, isDefault: true },
+                  { id: 'opt-oat-milk', name: 'شیر جو دوسر (گیاهی)', priceDelta: 25000, isDefault: false }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      {
+        id: 'cat-cold-bar',
+        name: 'بار سرد و نوشیدنی‌های خنک',
+        displayOrder: 2,
+        isActive: true,
+        menuItems: [
+          {
+            id: 'item-coldbrew',
+            title: 'کلد برو ۲۴ ساعته',
+            name: 'کلد برو ۲۴ ساعته',
+            description: 'دم‌آوری سرد ۲۴ ساعته از دان برازیل با نُت‌های شکلات تلخ و کارامل',
+            price: 135000,
+            discountPrice: 115000,
+            isAvailable: true,
+            displayOrder: 1,
+            tags: ['سرد', 'کم‌اسید'],
+            allergens: [],
+            coffeeProfile: {
+              origin: 'برازیل سرادو',
+              altitude: '900-1200 متر',
+              process: 'خشک (Natural)',
+              roastLevel: 'میانه تیره',
+              radar: { acidity: 3, body: 9, sweetness: 8, bitterness: 5, aroma: 7 },
+              flavorNotes: ['شکلات شیری', 'کارامل', 'آجیل']
+            },
+            modifierGroups: []
+          },
+          {
+            id: 'item-icedlatte',
+            title: 'آیس لاته تخصصی',
+            name: 'آیس لاته تخصصی',
+            description: 'اسپرسو دابل روی یخ با شیر خنک ابریشمی',
+            price: 115000,
+            discountPrice: null,
+            isAvailable: true,
+            displayOrder: 2,
+            tags: ['سرد', 'محبوب'],
+            allergens: ['شیر'],
+            coffeeProfile: null,
+            modifierGroups: []
+          }
+        ]
+      },
+      {
+        id: 'cat-bakery',
+        name: 'شیرینی‌پزی و بیکری تازه',
+        displayOrder: 3,
+        isActive: true,
+        menuItems: [
+          {
+            id: 'item-croissant',
+            title: 'کروسان کره‌ای فرانسوی',
+            name: 'کروسان کره‌ای فرانسوی',
+            description: 'کروسان تازه‌پز با ۲۷ لایه خمیر کره‌ای طبیعی',
+            price: 95000,
+            discountPrice: null,
+            isAvailable: true,
+            displayOrder: 1,
+            tags: ['تازه', 'صبحانه'],
+            allergens: ['گلوتن', 'شیر'],
+            coffeeProfile: null,
+            modifierGroups: [
+              {
+                id: 'mod-filling',
+                name: 'نوع فیلینگ',
+                isRequired: false,
+                minSelection: 0,
+                maxSelection: 1,
+                options: [
+                  { id: 'opt-plain', name: 'ساده (کره طبیعی)', priceDelta: 0, isDefault: true },
+                  { id: 'opt-nutella', name: 'نوتلا فندق', priceDelta: 20000, isDefault: false },
+                  { id: 'opt-cheese', name: 'پنیر خامه‌ای و اسفناج', priceDelta: 25000, isDefault: false }
+                ]
+              }
+            ]
+          },
+          {
+            id: 'item-cheesecake',
+            title: 'چیزکیک نیویورکی',
+            name: 'چیزکیک نیویورکی',
+            description: 'چیزکیک تنوری کلاسیک با کراست بیسکوییت کره‌ای و سس توت‌فرنگی تازه',
+            price: 145000,
+            discountPrice: null,
+            isAvailable: true,
+            displayOrder: 2,
+            tags: ['شیرین', 'محبوب'],
+            allergens: ['شیر', 'گلوتن', 'تخم‌مرغ'],
+            coffeeProfile: null,
+            modifierGroups: []
+          }
+        ]
+      }
+    ]
+  },
+  'noir-social-club': {
+    id: 'cmsuloxx200065su486rbxpb5',
+    name: 'نوآر سوشال کلاب',
+    slug: 'noir-social-club',
+    description: 'بار تخصصی قهوه شبانه با فضای دارک و آتمسفر خاص. محیطی ایده‌آل برای جلسات خلاقانه و ملاقات‌های شبانه.',
+    address: 'تهران، الهیه، خیابان فرشته، کوچه سوم',
+    phoneNumber: '02122345678',
+    latitude: 35.7891,
+    longitude: 51.4156,
+    businessType: 'CAFE_BAR',
+    workflowMode: 'TABLE_TAB_SPLIT',
+    themeId: 'OLED_CARBON',
+    theme: 'OLED_CARBON',
+    isOpenNow: true,
+    isApproved: true,
+    isActive: true,
+    loyaltyProgram: true,
+    stampsCount: 2,
+    categories: [
+      {
+        id: 'cat-noir-signature',
+        name: 'نوشیدنی‌های ویژه نوآر',
+        displayOrder: 1,
+        isActive: true,
+        menuItems: [
+          {
+            id: 'item-noir-espresso',
+            title: 'اسپرسو دارک بلِند',
+            name: 'اسپرسو دارک بلِند',
+            description: 'بلند اختصاصی نوآر با بادی سنگین و کرمای فندقی ضخیم',
+            price: 90000,
+            discountPrice: null,
+            isAvailable: true,
+            displayOrder: 1,
+            tags: ['دارک', 'پرکافئین'],
+            allergens: [],
+            coffeeProfile: {
+              origin: 'گوآتمالا و سومطره',
+              altitude: '1500-1800 متر',
+              process: 'ترکیبی',
+              roastLevel: 'دارک (Dark)',
+              radar: { acidity: 2, body: 10, sweetness: 6, bitterness: 8, aroma: 8 },
+              flavorNotes: ['کاکائو تلخ', 'تنباکوی شیرین', 'ادویه گرم']
+            },
+            modifierGroups: []
+          },
+          {
+            id: 'item-noir-affogato',
+            title: 'آفوگاتو نوآر',
+            name: 'آفوگاتو نوآر',
+            description: 'اسپرسو داغ تازه روی جلاتوی وانیل ماداگاسکار با تراشه‌های شکلات دست‌ساز',
+            price: 130000,
+            discountPrice: null,
+            isAvailable: true,
+            displayOrder: 2,
+            tags: ['دسر قهوه', 'ویژه'],
+            allergens: ['شیر'],
+            coffeeProfile: null,
+            modifierGroups: []
+          }
+        ]
+      }
+    ]
+  }
+};
+
 // --- Main Page Component ---
 
 export default function CafeMenuPage({ params }: { params?: Promise<{ cafeSlug: string }> }) {
   const routerParams = useParams();
   const routeSlug = (routerParams?.cafeSlug as string) || '';
-  const [cafeSlug, setCafeSlug] = useState<string>(routeSlug);
-  const [cafe, setCafe] = useState<CafePublic | null>(null);
-  const [theUsual, setTheUsual] = useState<MenuItem[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [activeCategory, setActiveCategory] = useState<string>('');
+  const initialSlug = routeSlug || 'roastery-collective';
+  
+  const [cafeSlug, setCafeSlug] = useState<string>(initialSlug);
+  const [cafe, setCafe] = useState<CafePublic | null>(FALLBACK_CAFES[initialSlug] || FALLBACK_CAFES['roastery-collective']);
+  const [theUsual, setTheUsual] = useState<MenuItem[]>(
+    (FALLBACK_CAFES[initialSlug]?.categories?.[0]?.menuItems?.slice(0, 3) as MenuItem[]) || []
+  );
+  const [loading, setLoading] = useState(false);
+  const [activeCategory, setActiveCategory] = useState<string>(
+    FALLBACK_CAFES[initialSlug]?.categories?.[0]?.id || ''
+  );
   const [cart, setCart] = useState<CartItem[]>([]);
   
   // Drawer & Modals state
@@ -96,31 +370,41 @@ export default function CafeMenuPage({ params }: { params?: Promise<{ cafeSlug: 
   useEffect(() => {
     if (routeSlug) {
       setCafeSlug(routeSlug);
+      if (FALLBACK_CAFES[routeSlug]) {
+        setCafe(FALLBACK_CAFES[routeSlug]);
+        if (FALLBACK_CAFES[routeSlug].categories?.[0]) {
+          setActiveCategory(FALLBACK_CAFES[routeSlug].categories[0].id);
+        }
+      }
     } else if (params) {
       params.then((p) => {
-        if (p?.cafeSlug) setCafeSlug(p.cafeSlug);
+        if (p?.cafeSlug) {
+          setCafeSlug(p.cafeSlug);
+          if (FALLBACK_CAFES[p.cafeSlug]) {
+            setCafe(FALLBACK_CAFES[p.cafeSlug]);
+          }
+        }
       }).catch(() => {});
     }
   }, [routeSlug, params]);
 
-  // Fetch Data
+  // Fetch Live Data in background
   useEffect(() => {
-    if (!cafeSlug) return;
+    const slugToFetch = cafeSlug || 'roastery-collective';
     let isMounted = true;
     const loadData = async () => {
       try {
-        setLoading(true);
         const [cafeRes, usualRes] = await Promise.all([
-          fetch(`/api/menu/${cafeSlug}`),
-          fetch(`/api/the-usual/${cafeSlug}`)
+          fetch(`/api/menu/${slugToFetch}`),
+          fetch(`/api/the-usual/${slugToFetch}`)
         ]);
         
         if (cafeRes.ok) {
           const raw = await cafeRes.json();
           const cafeData = raw.data || raw;
-          if (isMounted) {
+          if (isMounted && cafeData && (cafeData.categories?.length || cafeData.name)) {
             setCafe(cafeData);
-            if (cafeData.categories && cafeData.categories.length > 0) {
+            if (cafeData.categories && cafeData.categories.length > 0 && !activeCategory) {
               setActiveCategory(cafeData.categories[0].id);
             }
           }
@@ -128,12 +412,12 @@ export default function CafeMenuPage({ params }: { params?: Promise<{ cafeSlug: 
         if (usualRes.ok) {
           const usualRaw = await usualRes.json();
           const usualData = usualRaw.data || usualRaw;
-          if (isMounted && Array.isArray(usualData)) {
-            setTheUsual(usualData.slice(0, 3)); // Top 3
+          if (isMounted && Array.isArray(usualData) && usualData.length > 0) {
+            setTheUsual(usualData.slice(0, 3));
           }
         }
       } catch (err) {
-        console.error('Error fetching cafe data', err);
+        console.error('Background sync note:', err);
       } finally {
         if (isMounted) setLoading(false);
       }
