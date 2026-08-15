@@ -70,7 +70,7 @@ const CoffeeRadar = ({ profile }: { profile: CoffeeProfile }) => {
   );
 };
 
-const FALLBACK_CAFES: Record<string, CafePublic> = {
+const FALLBACK_CAFES: Record<string, any> = {
   'roastery-collective': {
     id: 'cmsuloxwv00055su40cryzwit',
     name: 'روستری کالکتیو',
