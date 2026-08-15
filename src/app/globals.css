@@ -76,9 +76,14 @@
   --theme-accent-fg:         #FFFFFF;
   --theme-accent-2:          #6B6B6B;
   --theme-card-shadow:       0 1px 3px rgba(0,0,0,0.08);
+  --theme-card-shadow-hover: 0 4px 12px rgba(0,0,0,0.12);
+  --theme-card-shadow-lg:    0 8px 24px rgba(0,0,0,0.16);
+  --theme-radius-sm:         4px;
   --theme-radius:            8px;
   --theme-radius-lg:         16px;
+  --theme-radius-full:       9999px;
   --theme-font-weight-display: 800;
+  --theme-accent-glow:       rgba(59, 59, 59, 0.25);
 }
 
 html {

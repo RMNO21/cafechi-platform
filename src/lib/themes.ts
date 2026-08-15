@@ -24,9 +24,14 @@ export const THEMES: Record<ThemeId, ThemeDefinition> = {
       "--theme-accent-fg": "#FFFFFF",
       "--theme-accent-2": "#A2734E",
       "--theme-card-shadow": "0 2px 10px rgba(44,30,20,0.06)",
+      "--theme-card-shadow-hover": "0 6px 20px rgba(44,30,20,0.12)",
+      "--theme-card-shadow-lg": "0 12px 32px rgba(44,30,20,0.16)",
+      "--theme-radius-sm": "6px",
       "--theme-radius": "12px",
       "--theme-radius-lg": "20px",
+      "--theme-radius-full": "9999px",
       "--theme-font-weight-display": "800",
+      "--theme-accent-glow": "rgba(139, 94, 60, 0.25)",
     },
   },
   OLED_CARBON: {
@@ -52,9 +57,14 @@ export const THEMES: Record<ThemeId, ThemeDefinition> = {
       "--theme-accent-fg": "#080808",
       "--theme-accent-2": "#D97706",
       "--theme-card-shadow": "0 4px 20px rgba(0,0,0,0.8)",
+      "--theme-card-shadow-hover": "0 6px 24px rgba(0,0,0,0.95)",
+      "--theme-card-shadow-lg": "0 16px 40px rgba(0,0,0,0.98)",
+      "--theme-radius-sm": "6px",
       "--theme-radius": "10px",
       "--theme-radius-lg": "18px",
+      "--theme-radius-full": "9999px",
       "--theme-font-weight-display": "900",
+      "--theme-accent-glow": "rgba(245, 158, 11, 0.45)",
     },
   },
   ARTISAN_SEPIA: {
@@ -80,9 +90,14 @@ export const THEMES: Record<ThemeId, ThemeDefinition> = {
       "--theme-accent-fg": "#FFFDF9",
       "--theme-accent-2": "#A85B2D",
       "--theme-card-shadow": "0 2px 8px rgba(43,29,20,0.08)",
+      "--theme-card-shadow-hover": "0 6px 18px rgba(43,29,20,0.14)",
+      "--theme-card-shadow-lg": "0 12px 30px rgba(43,29,20,0.18)",
+      "--theme-radius-sm": "4px",
       "--theme-radius": "8px",
       "--theme-radius-lg": "16px",
+      "--theme-radius-full": "9999px",
       "--theme-font-weight-display": "800",
+      "--theme-accent-glow": "rgba(141, 74, 35, 0.3)",
     },
   },
   NEO_EDITORIAL: {
@@ -108,9 +123,14 @@ export const THEMES: Record<ThemeId, ThemeDefinition> = {
       "--theme-accent-fg": "#FFFFFF",
       "--theme-accent-2": "#3F3F46",
       "--theme-card-shadow": "4px 4px 0px #18181B",
+      "--theme-card-shadow-hover": "6px 6px 0px #18181B",
+      "--theme-card-shadow-lg": "8px 8px 0px #18181B",
+      "--theme-radius-sm": "0px",
       "--theme-radius": "0px",
       "--theme-radius-lg": "0px",
+      "--theme-radius-full": "0px",
       "--theme-font-weight-display": "900",
+      "--theme-accent-glow": "none",
     },
   },
   WARM_TERRACOTTA: {
@@ -136,23 +156,30 @@ export const THEMES: Record<ThemeId, ThemeDefinition> = {
       "--theme-accent-fg": "#FCF3EC",
       "--theme-accent-2": "#D96B40",
       "--theme-card-shadow": "0 4px 16px rgba(194,83,39,0.12)",
+      "--theme-card-shadow-hover": "0 8px 24px rgba(194,83,39,0.20)",
+      "--theme-card-shadow-lg": "0 16px 36px rgba(194,83,39,0.24)",
+      "--theme-radius-sm": "12px",
       "--theme-radius": "22px",
       "--theme-radius-lg": "30px",
+      "--theme-radius-full": "9999px",
       "--theme-font-weight-display": "800",
+      "--theme-accent-glow": "rgba(194, 83, 39, 0.35)",
     },
   },
 };
 
-export function getThemeCssString(themeId: ThemeId): string {
-  const theme = THEMES[themeId];
-  if (!theme) return "";
+export function getTheme(themeId?: string): ThemeDefinition {
+  if (typeof themeId === "string" && Object.prototype.hasOwnProperty.call(THEMES, themeId)) {
+    return THEMES[themeId as ThemeId];
+  }
+  return THEMES.NORDIC_MINIMAL;
+}
+
+export function getThemeCssString(themeId?: string | ThemeId): string {
+  const theme = getTheme(themeId as string);
   return Object.entries(theme.cssVars)
     .map(([key, value]) => `${key}: ${value};`)
     .join(" ");
-}
-
-export function getTheme(themeId: string): ThemeDefinition {
-  return THEMES[themeId as ThemeId] ?? THEMES.NORDIC_MINIMAL;
 }
 
 export const THEME_LIST = Object.values(THEMES);

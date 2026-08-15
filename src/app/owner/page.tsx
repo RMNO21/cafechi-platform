@@ -3,12 +3,12 @@
 import { useState, useEffect } from "react";
 import {
   Settings, LayoutGrid, Users, QrCode, Palette,
-  Coffee, Save, Plus, Trash2, ChevronDown, ChevronUp,
+  Coffee, Save, Plus, Trash2,
   ToggleLeft, ToggleRight, GripVertical, Edit, Eye,
   Wifi, Cigarette, TreePine, Gamepad2, Briefcase, Heart,
-  Bell, DollarSign, ClipboardList, BarChart3, LogOut
+  Bell, LogOut
 } from "lucide-react";
-import { THEME_LIST, getThemeCssString } from "@/lib/themes";
+import { THEMES, THEME_LIST } from "@/lib/themes";
 import type { ThemeId, WorkflowMode, KdsStation } from "@/types";
 import {
   DndContext,
@@ -569,25 +569,21 @@ function ThemeTab({ cafe, onSave, saving }: { cafe: CafeData; onSave: (d: Partia
 }
 
 function ThemePreview({ themeId, cafeName }: { themeId: ThemeId; cafeName: string }) {
-  const { THEMES } = require("@/lib/themes");
-  const theme = THEMES[themeId];
-
-  const vars: Record<string, string> = {};
-  Object.entries(theme.cssVars).forEach(([k, v]) => {
-    vars[k.replace("--", "")] = v as string;
-  });
+  const theme = THEMES[themeId] ?? THEMES.NORDIC_MINIMAL;
+  const { cssVars } = theme;
 
   return (
     <div style={{
-      background: theme.cssVars["--theme-bg"],
-      color: theme.cssVars["--theme-text"],
+      background: cssVars["--theme-bg"],
+      color: cssVars["--theme-text"],
       padding: "var(--space-6)",
       minHeight: 200,
+      fontFamily: "var(--font-persian)",
     }}>
       {/* Mock header */}
-      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "var(--space-5)", paddingBottom: "var(--space-4)", borderBottom: `1px solid ${theme.cssVars["--theme-border"]}` }}>
+      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "var(--space-5)", paddingBottom: "var(--space-4)", borderBottom: `1px solid ${cssVars["--theme-border"]}` }}>
         <div style={{ fontWeight: 900, fontSize: "1.25rem" }}>{cafeName}</div>
-        <div style={{ background: theme.cssVars["--theme-accent"], color: theme.cssVars["--theme-accent-fg"], padding: "var(--space-2) var(--space-4)", borderRadius: theme.cssVars["--theme-radius"], fontSize: "0.875rem", fontWeight: 700 }}>
+        <div style={{ background: cssVars["--theme-accent"], color: cssVars["--theme-accent-fg"], padding: "var(--space-2) var(--space-4)", borderRadius: cssVars["--theme-radius"], fontSize: "0.875rem", fontWeight: 700 }}>
           سفارش
         </div>
       </div>
@@ -597,12 +593,12 @@ function ThemePreview({ themeId, cafeName }: { themeId: ThemeId; cafeName: strin
         {["اسپرسو", "نوشیدنی سرد", "شیرینی"].map((cat, i) => (
           <div key={cat} style={{
             padding: "var(--space-2) var(--space-4)",
-            borderRadius: theme.cssVars["--theme-radius"],
-            background: i === 0 ? theme.cssVars["--theme-accent"] : theme.cssVars["--theme-surface"],
-            color: i === 0 ? theme.cssVars["--theme-accent-fg"] : theme.cssVars["--theme-text-2"],
+            borderRadius: cssVars["--theme-radius"],
+            background: i === 0 ? cssVars["--theme-accent"] : cssVars["--theme-surface"],
+            color: i === 0 ? cssVars["--theme-accent-fg"] : cssVars["--theme-text-2"],
             fontSize: "0.875rem",
             fontWeight: 700,
-            border: `1px solid ${theme.cssVars["--theme-border"]}`,
+            border: `1px solid ${cssVars["--theme-border"]}`,
           }}>
             {cat}
           </div>
@@ -611,26 +607,26 @@ function ThemePreview({ themeId, cafeName }: { themeId: ThemeId; cafeName: strin
 
       {/* Mock item */}
       <div style={{
-        background: theme.cssVars["--theme-surface"],
-        border: `1px solid ${theme.cssVars["--theme-border"]}`,
-        borderRadius: theme.cssVars["--theme-radius-lg"],
+        background: cssVars["--theme-surface"],
+        border: `1px solid ${cssVars["--theme-border"]}`,
+        borderRadius: cssVars["--theme-radius-lg"],
         padding: "var(--space-4)",
         display: "flex",
         justifyContent: "space-between",
         alignItems: "center",
-        boxShadow: theme.cssVars["--theme-card-shadow"],
+        boxShadow: cssVars["--theme-card-shadow"],
       }}>
         <div>
           <div style={{ fontWeight: 800, fontSize: "1rem" }}>فلت وایت</div>
-          <div style={{ fontSize: "0.8125rem", color: theme.cssVars["--theme-text-2"] }}>اسپرسو با شیر بخارپز</div>
+          <div style={{ fontSize: "0.8125rem", color: cssVars["--theme-text-2"] }}>اسپرسو با شیر بخارپز</div>
         </div>
         <div style={{ display: "flex", alignItems: "center", gap: "var(--space-3)" }}>
           <span style={{ fontWeight: 800, fontFamily: "var(--font-latin)" }}>۱۲۵،۰۰۰</span>
           <div style={{
             width: 32, height: 32,
-            background: theme.cssVars["--theme-accent"],
-            color: theme.cssVars["--theme-accent-fg"],
-            borderRadius: theme.cssVars["--theme-radius"],
+            background: cssVars["--theme-accent"],
+            color: cssVars["--theme-accent-fg"],
+            borderRadius: cssVars["--theme-radius"],
             display: "flex", alignItems: "center", justifyContent: "center",
             fontWeight: 800, fontSize: "1.2rem",
           }}>+</div>

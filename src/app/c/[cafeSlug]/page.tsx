@@ -1,32 +1,32 @@
 'use client';
 
-import React, { useState, useEffect, useRef, useMemo, useCallback } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import type { CafePublic, Category, MenuItem, CartItem, CoffeeProfile, SelectedModifier } from '@/types';
 import { getThemeCssString, getTheme } from '@/lib/themes';
-import { useParams } from 'next/navigation';
+import { useParams, useRouter } from 'next/navigation';
 import { 
-  Coffee, ShoppingBag, Plus, Minus, X, ChevronDown, ChevronUp, 
-  Bell, Receipt, Droplets, CreditCard, Star, AlertTriangle, Info, Check 
+  Coffee, ShoppingBag, Plus, Minus, X, ChevronDown, 
+  Bell, Receipt, Droplets, CreditCard, Star, Check 
 } from 'lucide-react';
 
 // --- SVGs & Components ---
 
 const CoffeeRadar = ({ profile }: { profile: CoffeeProfile }) => {
-  const size = 160;
+  const size = 200;
   const center = size / 2;
-  const radius = size * 0.4;
+  const radius = 64;
   
   const axes = [
-    { label: 'اسیدیته', value: profile.radar?.acidity || profile.acidity || 0 },
-    { label: 'بادی', value: profile.radar?.body || profile.body || 0 },
-    { label: 'شیرینی', value: profile.radar?.sweetness || profile.sweetness || 0 },
-    { label: 'تلخی', value: profile.radar?.bitterness || profile.bitterness || 0 },
-    { label: 'عطر', value: profile.radar?.aroma || profile.aroma || 0 },
+    { label: 'اسیدیته', value: profile.radar?.acidity ?? profile.acidity ?? 0 },
+    { label: 'بادی', value: profile.radar?.body ?? profile.body ?? 0 },
+    { label: 'شیرینی', value: profile.radar?.sweetness ?? profile.sweetness ?? 0 },
+    { label: 'تلخی', value: profile.radar?.bitterness ?? profile.bitterness ?? 0 },
+    { label: 'عطر', value: profile.radar?.aroma ?? profile.aroma ?? 0 },
   ];
 
   const getPoint = (value: number, angleIndex: number, max: number = 10) => {
     const angle = (Math.PI / 2) - (2 * Math.PI * angleIndex / 5);
-    const r = (value / max) * radius;
+    const r = (Math.min(Math.max(value, 0), max) / max) * radius;
     return {
       x: center + r * Math.cos(angle),
       y: center - r * Math.sin(angle)
@@ -39,38 +39,47 @@ const CoffeeRadar = ({ profile }: { profile: CoffeeProfile }) => {
   }).join(' ');
 
   return (
-    <div className="flex flex-col items-center justify-center p-4">
+    <div className="flex flex-col items-center justify-center p-2" style={{ direction: 'ltr' }}>
       <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`}>
         {[2, 4, 6, 8, 10].map(level => {
           const bgPoints = axes.map((_, i) => {
             const p = getPoint(level, i, 10);
             return `${p.x},${p.y}`;
           }).join(' ');
-          return <polygon key={level} points={bgPoints} fill="none" stroke="var(--theme-text)" strokeOpacity="0.1" />;
+          return <polygon key={level} points={bgPoints} fill="none" stroke="var(--theme-border)" strokeOpacity="0.8" strokeWidth="1" />;
         })}
         {axes.map((a, i) => {
           const p = getPoint(10, i, 10);
-          const textP = getPoint(11.5, i, 10);
+          const textP = getPoint(12.8, i, 10);
           return (
             <g key={a.label}>
-              <line x1={center} y1={center} x2={p.x} y2={p.y} stroke="var(--theme-text)" strokeOpacity="0.1" />
-              <text x={textP.x} y={textP.y} fill="var(--theme-text)" fontSize="10" textAnchor="middle" dominantBaseline="middle">
+              <line x1={center} y1={center} x2={p.x} y2={p.y} stroke="var(--theme-border)" strokeOpacity="0.8" strokeWidth="1" />
+              <text 
+                x={textP.x} 
+                y={textP.y} 
+                fill="var(--theme-text)" 
+                fontSize="11" 
+                fontWeight="700" 
+                fontFamily="var(--font-persian)" 
+                textAnchor="middle" 
+                dominantBaseline="middle"
+              >
                 {a.label}
               </text>
             </g>
           );
         })}
-        <polygon points={points} fill="var(--theme-accent)" fillOpacity="0.3" stroke="var(--theme-accent)" strokeWidth="2" />
+        <polygon points={points} fill="var(--theme-accent)" fillOpacity="0.25" stroke="var(--theme-accent)" strokeWidth="2.5" />
         {axes.map((a, i) => {
           const p = getPoint(a.value, i);
-          return <circle key={`c-${i}`} cx={p.x} cy={p.y} r="3" fill="var(--theme-accent)" />;
+          return <circle key={`c-${i}`} cx={p.x} cy={p.y} r="3.5" fill="var(--theme-accent)" />;
         })}
       </svg>
     </div>
   );
 };
 
-const FALLBACK_CAFES: Record<string, any> = {
+const FALLBACK_CAFES: Record<string, CafePublic> = {
   'roastery-collective': {
     id: 'cmsuloxwv00055su40cryzwit',
     name: 'روستری کالکتیو',
@@ -336,11 +345,12 @@ const FALLBACK_CAFES: Record<string, any> = {
       }
     ]
   }
-};
+} as unknown as Record<string, CafePublic>;
 
 // --- Main Page Component ---
 
 export default function CafeMenuPage({ params }: { params?: Promise<{ cafeSlug: string }> }) {
+  const router = useRouter();
   const routerParams = useParams();
   const routeSlug = (routerParams?.cafeSlug as string) || '';
   const initialSlug = routeSlug || 'roastery-collective';
@@ -368,25 +378,22 @@ export default function CafeMenuPage({ params }: { params?: Promise<{ cafeSlug: 
 
   // Parse params
   useEffect(() => {
-    if (routeSlug) {
-      setCafeSlug(routeSlug);
-      if (FALLBACK_CAFES[routeSlug]) {
-        setCafe(FALLBACK_CAFES[routeSlug]);
-        if (FALLBACK_CAFES[routeSlug].categories?.[0]) {
-          setActiveCategory(FALLBACK_CAFES[routeSlug].categories[0].id);
-        }
-      }
-    } else if (params) {
-      params.then((p) => {
-        if (p?.cafeSlug) {
-          setCafeSlug(p.cafeSlug);
-          if (FALLBACK_CAFES[p.cafeSlug]) {
-            setCafe(FALLBACK_CAFES[p.cafeSlug]);
+    if (!params) return;
+    let active = true;
+    params.then((p) => {
+      if (active && p?.cafeSlug && p.cafeSlug !== cafeSlug) {
+        setCafeSlug(p.cafeSlug);
+        const fallback = FALLBACK_CAFES[p.cafeSlug];
+        if (fallback) {
+          setCafe(fallback);
+          if (fallback.categories && fallback.categories[0]) {
+            setActiveCategory(fallback.categories[0].id);
           }
         }
-      }).catch(() => {});
-    }
-  }, [routeSlug, params]);
+      }
+    }).catch(() => {});
+    return () => { active = false; };
+  }, [params, cafeSlug]);
 
   // Fetch Live Data in background
   useEffect(() => {
@@ -454,33 +461,35 @@ export default function CafeMenuPage({ params }: { params?: Promise<{ cafeSlug: 
     const el = categoryRefs.current[categoryId];
     if (el) {
       window.scrollTo({
-        top: el.offsetTop - 80,
+        top: el.offsetTop - 120,
         behavior: 'smooth'
       });
       setActiveCategory(categoryId);
     }
   };
 
-  const addToCart = (item: MenuItem, qty: number, modifiers: SelectedModifier[] = []) => {
+  const addToCart = useCallback((item: MenuItem, qty: number, modifiers: SelectedModifier[] = []) => {
     if (cafe?.workflowMode === 'VIEW_ONLY') return;
     
-    const cartItem: CartItem = {
-      id: Math.random().toString(36).substring(7),
-      menuItemId: item.id,
-      title: item.title || item.name || '',
-      name: item.title || item.name || '',
-      price: item.discountPrice || item.discountedPrice || item.price,
-      quantity: qty,
-      selectedModifiers: modifiers,
-      modifiers,
-    };
-    setCart(prev => [...prev, cartItem]);
-    closeDrawer();
-  };
-
-  const removeFromCart = (cartItemId: string) => {
-    setCart(prev => prev.filter(c => c.id !== cartItemId));
-  };
+    setCart(prev => {
+      const modifierKey = modifiers.map(m => m.id).sort().join('-');
+      const cartItemId = `${item.id}-${modifierKey}-${prev.length + 1}`;
+      const cartItem: CartItem = {
+        id: cartItemId,
+        menuItemId: item.id,
+        title: item.title || item.name || '',
+        name: item.title || item.name || '',
+        price: item.discountPrice || item.discountedPrice || item.price,
+        quantity: qty,
+        selectedModifiers: modifiers,
+        modifiers,
+      };
+      return [...prev, cartItem];
+    });
+    setSelectedItem(null);
+    setDrawerQuantity(1);
+    setDrawerModifiers([]);
+  }, [cafe?.workflowMode]);
 
   const openDrawer = (item: MenuItem) => {
     setSelectedItem(item);
@@ -508,7 +517,7 @@ export default function CafeMenuPage({ params }: { params?: Promise<{ cafeSlug: 
         REQUEST_POS: 'REQUEST_POS',
       };
       const requestType = typeMapping[type] || 'CALL_WAITER';
-      const defaultTable = (cafe as any).tables?.[0];
+      const defaultTable = (cafe as CafePublic & { tables?: Array<{ id: string; tableNumber: string }> }).tables?.[0];
 
       await fetch('/api/table-service', {
         method: 'POST',
@@ -531,13 +540,47 @@ export default function CafeMenuPage({ params }: { params?: Promise<{ cafeSlug: 
   const handleCheckout = async () => {
     if (!cafe || cart.length === 0) return;
     try {
-      const items = cart.map(c => ({
+      // ── Detect fake fallback IDs and remap to real DB IDs ──────────────────
+      const hasFakeIds = cart.some(c =>
+        c.menuItemId?.startsWith('item-') ||
+        c.menuItemId?.startsWith('cat-') ||
+        !c.menuItemId
+      );
+
+      let activeCart = cart;
+      let activeCafe = cafe;
+
+      if (hasFakeIds) {
+        // Refresh real cafe data
+        const menuRes = await fetch(`/api/menu/${cafeSlug}`);
+        if (menuRes.ok) {
+          const menuRaw = await menuRes.json();
+          const freshCafe = menuRaw.data || menuRaw;
+          if (freshCafe?.categories) {
+            activeCafe = freshCafe;
+            setCafe(freshCafe);
+            const allRealItems: MenuItem[] = freshCafe.categories.flatMap(
+              (cat: { menuItems?: MenuItem[]; items?: MenuItem[] }) =>
+                cat.menuItems || cat.items || []
+            );
+            // Remap by title match
+            activeCart = cart.map(cartItem => {
+              const realItem = allRealItems.find(
+                ri => (ri.title || ri.name) === (cartItem.title || cartItem.name)
+              );
+              return realItem ? { ...cartItem, menuItemId: realItem.id } : cartItem;
+            });
+          }
+        }
+      }
+
+      const items = activeCart.map(c => ({
         menuItemId: c.menuItemId,
         quantity: c.quantity,
         selectedModifiers: (c.selectedModifiers || c.modifiers || []).map(m => ({
           id: m.id,
           name: m.name,
-          priceDelta: m.priceDelta ?? (m as any).price ?? 0,
+          priceDelta: m.priceDelta ?? 0,
         })),
         itemNotes: c.itemNotes || '',
       }));
@@ -546,8 +589,8 @@ export default function CafeMenuPage({ params }: { params?: Promise<{ cafeSlug: 
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          cafeId: cafe.id,
-          paymentMode: cafe.workflowMode,
+          cafeId: activeCafe.id,
+          paymentMode: activeCafe.workflowMode,
           items,
         })
       });
@@ -558,12 +601,12 @@ export default function CafeMenuPage({ params }: { params?: Promise<{ cafeSlug: 
       }
       const order = data.data || data;
 
-      if (cafe.workflowMode === 'PAY_UPFRONT_BUZZER') {
-        window.location.href = `/mock-payment?orderId=${order.id}`;
-      } else if (cafe.workflowMode === 'PAY_AT_COUNTER') {
+      if (activeCafe.workflowMode === 'PAY_UPFRONT_BUZZER') {
+        router.push(`/mock-payment?orderId=${order.id}`);
+      } else if (activeCafe.workflowMode === 'PAY_AT_COUNTER') {
         setCheckoutModal({ isOpen: true, type: 'PAY_AT_COUNTER', orderCode: order.orderCode || order.code || 'C-142' });
         setCart([]);
-      } else if (cafe.workflowMode === 'TABLE_TAB_SPLIT') {
+      } else if (activeCafe.workflowMode === 'TABLE_TAB_SPLIT') {
         setCheckoutModal({ isOpen: true, type: 'TABLE_TAB_SPLIT' });
         setCart([]);
       }
@@ -576,7 +619,7 @@ export default function CafeMenuPage({ params }: { params?: Promise<{ cafeSlug: 
   // Calculations
   const cartTotal = cart.reduce((total, item) => {
     const mods = item.modifiers || item.selectedModifiers || [];
-    const modsTotal = mods.reduce((mt: number, mod: any) => mt + (mod.price || mod.priceDelta || 0), 0);
+    const modsTotal = mods.reduce((mt: number, mod: SelectedModifier & { price?: number }) => mt + (mod.price || mod.priceDelta || 0), 0);
     return total + ((item.price + modsTotal) * item.quantity);
   }, 0);
 
@@ -605,7 +648,7 @@ export default function CafeMenuPage({ params }: { params?: Promise<{ cafeSlug: 
         ...(activeTheme.cssVars as React.CSSProperties),
       }}
     >
-      {themeCss && <style dangerouslySetInnerHTML={{ __html: `:root, body { ${themeCss} }` }} />}
+      {themeCss && <style dangerouslySetInnerHTML={{ __html: `.cm-root-wrapper { ${themeCss} }` }} />}
       
       {/* Self-contained Scoped CSS */}
       <style dangerouslySetInnerHTML={{ __html: `
@@ -628,7 +671,7 @@ export default function CafeMenuPage({ params }: { params?: Promise<{ cafeSlug: 
           .cm-container {
             border-left: 1px solid var(--theme-border);
             border-right: 1px solid var(--theme-border);
-            box-shadow: 0 0 50px rgba(0,0,0,0.08);
+            box-shadow: var(--theme-card-shadow-lg, 0 0 50px rgba(0,0,0,0.08));
           }
         }
         .cm-header {
@@ -691,7 +734,7 @@ export default function CafeMenuPage({ params }: { params?: Promise<{ cafeSlug: 
         .cm-tabs-scroll::-webkit-scrollbar { display: none; }
         .cm-tab-btn {
           padding: 7px 16px;
-          border-radius: 999px;
+          border-radius: var(--theme-radius-full, 999px);
           font-size: 0.8125rem;
           font-weight: 700;
           border: 1px solid var(--theme-border);
@@ -709,13 +752,13 @@ export default function CafeMenuPage({ params }: { params?: Promise<{ cafeSlug: 
           box-shadow: var(--theme-card-shadow);
         }
         .cm-banner-viewonly {
-          background: #FEF3C7;
-          color: #92400E;
+          background: var(--theme-bg-2);
+          color: var(--theme-text);
           text-align: center;
           padding: 8px;
           font-size: 0.8125rem;
           font-weight: 700;
-          border-bottom: 1px solid #FDE68A;
+          border-bottom: 1px solid var(--theme-border);
           position: sticky;
           top: 0;
           z-index: 50;
@@ -747,10 +790,10 @@ export default function CafeMenuPage({ params }: { params?: Promise<{ cafeSlug: 
         .cm-usual-scroll::-webkit-scrollbar { display: none; }
         .cm-usual-card {
           min-width: 150px;
-          background: rgba(255, 255, 255, 0.15);
+          background: color-mix(in srgb, var(--theme-accent-fg) 16%, transparent);
           backdrop-filter: blur(10px);
           -webkit-backdrop-filter: blur(10px);
-          border: 1px solid rgba(255, 255, 255, 0.25);
+          border: 1px solid color-mix(in srgb, var(--theme-accent-fg) 25%, transparent);
           border-radius: var(--theme-radius, 12px);
           padding: 12px;
           display: flex;
@@ -779,7 +822,7 @@ export default function CafeMenuPage({ params }: { params?: Promise<{ cafeSlug: 
           font-weight: 800;
           cursor: pointer;
           font-family: inherit;
-          box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+          box-shadow: var(--theme-card-shadow);
           transition: transform 120ms;
         }
         .cm-usual-btn:hover {
@@ -808,7 +851,7 @@ export default function CafeMenuPage({ params }: { params?: Promise<{ cafeSlug: 
           background: var(--theme-accent);
           color: var(--theme-accent-fg);
           padding: 3px 10px;
-          border-radius: 999px;
+          border-radius: var(--theme-radius-full, 999px);
           font-weight: 700;
         }
         .cm-stamps-row {
@@ -820,10 +863,11 @@ export default function CafeMenuPage({ params }: { params?: Promise<{ cafeSlug: 
         .cm-stamp-item {
           width: 44px;
           height: 44px;
-          border-radius: 50%;
+          border-radius: var(--theme-radius-full, 50%);
           display: flex;
           align-items: center;
           justify-content: center;
+          background: var(--theme-bg-2);
           border: 2px dashed var(--theme-border);
           color: var(--theme-text-2);
           transition: all 150ms ease;
@@ -833,10 +877,12 @@ export default function CafeMenuPage({ params }: { params?: Promise<{ cafeSlug: 
           color: var(--theme-accent-fg);
           border-style: solid;
           border-color: var(--theme-accent);
-          box-shadow: var(--theme-card-shadow);
+          box-shadow: 0 0 12px var(--theme-accent-glow, rgba(139, 94, 60, 0.35));
         }
         .cm-category-block {
           margin: 24px 16px 8px;
+          content-visibility: auto;
+          contain-intrinsic-block-size: auto calc(96px * 4 + 60px);
         }
         .cm-cat-title {
           font-size: 1.15rem;
@@ -860,7 +906,12 @@ export default function CafeMenuPage({ params }: { params?: Promise<{ cafeSlug: 
         }
         .cm-item-card:hover {
           transform: translateY(-2px);
-          box-shadow: 0 4px 16px rgba(0,0,0,0.1);
+          box-shadow: var(--theme-card-shadow-hover, var(--theme-card-shadow));
+        }
+        @media (prefers-reduced-motion: reduce) {
+          .cm-item-card, .cm-tab-btn, .cm-usual-btn, .cm-stamp-item, .cm-table-fab {
+            transition: none !important;
+          }
         }
         .cm-item-thumb {
           width: 84px;
@@ -922,7 +973,7 @@ export default function CafeMenuPage({ params }: { params?: Promise<{ cafeSlug: 
         .cm-item-plus-btn {
           width: 32px;
           height: 32px;
-          border-radius: 8px;
+          border-radius: var(--theme-radius, 8px);
           background: var(--theme-accent);
           color: var(--theme-accent-fg);
           border: none;
@@ -946,12 +997,13 @@ export default function CafeMenuPage({ params }: { params?: Promise<{ cafeSlug: 
           z-index: 50;
           background: var(--theme-accent);
           color: var(--theme-accent-fg);
-          border-radius: 16px;
+          border-radius: var(--theme-radius-lg, 16px);
           padding: 12px 18px;
           display: flex;
           align-items: center;
           justify-content: space-between;
-          box-shadow: 0 8px 30px rgba(0,0,0,0.25);
+          box-shadow: var(--theme-card-shadow-lg, 0 8px 30px rgba(0,0,0,0.25));
+          border: 1px solid var(--theme-border);
           cursor: pointer;
         }
         .cm-table-fab {
@@ -961,11 +1013,11 @@ export default function CafeMenuPage({ params }: { params?: Promise<{ cafeSlug: 
           z-index: 45;
           width: 52px;
           height: 52px;
-          border-radius: 50%;
+          border-radius: var(--theme-radius-full, 50%);
           background: var(--theme-surface);
           color: var(--theme-text);
           border: 1px solid var(--theme-border);
-          box-shadow: 0 4px 16px rgba(0,0,0,0.15);
+          box-shadow: var(--theme-card-shadow);
           display: flex;
           align-items: center;
           justify-content: center;
@@ -977,8 +1029,8 @@ export default function CafeMenuPage({ params }: { params?: Promise<{ cafeSlug: 
           bottom: 64px;
           right: 0;
           background: var(--theme-surface);
-          border-radius: 16px;
-          box-shadow: 0 8px 24px rgba(0,0,0,0.18);
+          border-radius: var(--theme-radius-lg, 16px);
+          box-shadow: var(--theme-card-shadow-lg, 0 8px 24px rgba(0,0,0,0.18));
           padding: 8px;
           width: 190px;
           border: 1px solid var(--theme-border);
@@ -993,7 +1045,7 @@ export default function CafeMenuPage({ params }: { params?: Promise<{ cafeSlug: 
           padding: 10px 12px;
           background: none;
           border: none;
-          border-radius: 10px;
+          border-radius: var(--theme-radius, 10px);
           font-size: 0.8125rem;
           font-weight: 700;
           color: var(--theme-text);
@@ -1019,14 +1071,15 @@ export default function CafeMenuPage({ params }: { params?: Promise<{ cafeSlug: 
         .cm-drawer-sheet {
           background: var(--theme-surface);
           color: var(--theme-text);
-          border-top-left-radius: 24px;
-          border-top-right-radius: 24px;
+          border-top-left-radius: var(--theme-radius-lg, 24px);
+          border-top-right-radius: var(--theme-radius-lg, 24px);
+          border-top: 1px solid var(--theme-border);
           width: 100%;
           max-width: 580px;
           max-height: 85vh;
           overflow-y: auto;
           padding: 20px 18px 30px;
-          box-shadow: 0 -8px 30px rgba(0,0,0,0.3);
+          box-shadow: var(--theme-card-shadow-lg, 0 -8px 30px rgba(0,0,0,0.3));
         }
         .cm-modal-overlay {
           position: fixed;
@@ -1042,11 +1095,12 @@ export default function CafeMenuPage({ params }: { params?: Promise<{ cafeSlug: 
         .cm-modal-card {
           background: var(--theme-surface);
           color: var(--theme-text);
-          border-radius: 24px;
+          border-radius: var(--theme-radius-lg, 24px);
+          border: 1px solid var(--theme-border);
           padding: 24px;
           width: 100%;
           max-width: 380px;
-          box-shadow: 0 16px 40px rgba(0,0,0,0.25);
+          box-shadow: var(--theme-card-shadow-lg, 0 16px 40px rgba(0,0,0,0.25));
           text-align: center;
           display: flex;
           flex-direction: column;
@@ -1164,12 +1218,20 @@ export default function CafeMenuPage({ params }: { params?: Promise<{ cafeSlug: 
                   >
                     <div className="cm-item-thumb">
                       {item.imageUrl ? (
-                        <img src={item.imageUrl} alt={item.title || item.name} />
+                        <img
+                          src={item.imageUrl}
+                          alt={item.title || item.name}
+                          loading="lazy"
+                          decoding="async"
+                          width={84}
+                          height={84}
+                          style={{ objectFit: 'cover', width: '100%', height: '100%' }}
+                        />
                       ) : (
                         <Coffee size={32} />
                       )}
                       {!item.isAvailable && (
-                        <div style={{ position: 'absolute', inset: 0, background: 'rgba(0,0,0,0.6)', color: '#fff', fontSize: '11px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 'bold' }}>
+                        <div style={{ position: 'absolute', inset: 0, background: 'rgba(0, 0, 0, 0.7)', color: '#FFFFFF', backdropFilter: 'blur(2px)', fontSize: '11px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 700, borderRadius: 'var(--theme-radius)' }}>
                           ناموجود
                         </div>
                       )}
@@ -1222,7 +1284,7 @@ export default function CafeMenuPage({ params }: { params?: Promise<{ cafeSlug: 
             <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
               <div style={{ position: 'relative' }}>
                 <ShoppingBag size={24} />
-                <span style={{ position: 'absolute', top: '-6px', right: '-6px', background: '#FFF', color: 'var(--theme-accent)', width: '18px', height: '18px', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '11px', fontWeight: 'bold' }}>
+                <span style={{ position: 'absolute', top: '-6px', right: '-6px', background: 'var(--theme-surface)', color: 'var(--theme-accent)', width: '18px', height: '18px', borderRadius: 'var(--theme-radius-full, 50%)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '11px', fontWeight: 800, border: '1px solid var(--theme-border)' }}>
                   {cartCount}
                 </span>
               </div>
@@ -1231,7 +1293,7 @@ export default function CafeMenuPage({ params }: { params?: Promise<{ cafeSlug: 
                 <span style={{ fontWeight: 800, fontSize: '0.9375rem' }}>{cartTotal.toLocaleString()} تومان</span>
               </div>
             </div>
-            <div style={{ fontWeight: 800, fontSize: '0.875rem', background: 'rgba(0,0,0,0.2)', padding: '6px 14px', borderRadius: '10px', display: 'flex', alignItems: 'center', gap: '6px' }}>
+            <div style={{ fontWeight: 800, fontSize: '0.875rem', background: 'color-mix(in srgb, var(--theme-accent-fg) 20%, transparent)', color: 'var(--theme-accent-fg)', padding: '6px 14px', borderRadius: 'var(--theme-radius)', display: 'flex', alignItems: 'center', gap: '6px' }}>
               تکمیل سفارش <ChevronDown size={16} style={{ transform: 'rotate(90deg)' }} />
             </div>
           </div>
@@ -1242,23 +1304,23 @@ export default function CafeMenuPage({ params }: { params?: Promise<{ cafeSlug: 
           {tableHubOpen && (
             <div className="cm-table-hub-menu">
               <button onClick={() => handleTableService('WAITER')} className="cm-table-hub-btn">
-                <Bell size={18} style={{ color: '#F59E0B' }} /> صدا زدن سالن‌کار
+                <Bell size={18} style={{ color: 'var(--color-amber, #D97706)' }} /> صدا زدن سالن‌کار
               </button>
               <button onClick={() => handleTableService('BILL')} className="cm-table-hub-btn">
-                <Receipt size={18} style={{ color: '#10B981' }} /> درخواست صورتحساب
+                <Receipt size={18} style={{ color: 'var(--color-emerald, #059669)' }} /> درخواست صورتحساب
               </button>
               <button onClick={() => handleTableService('WATER')} className="cm-table-hub-btn">
-                <Droplets size={18} style={{ color: '#3B82F6' }} /> درخواست آب خنک
+                <Droplets size={18} style={{ color: 'var(--color-accent, #3B82F6)' }} /> درخواست آب خنک
               </button>
               <button onClick={() => handleTableService('POS')} className="cm-table-hub-btn">
-                <CreditCard size={18} style={{ color: '#8B5CF6' }} /> درخواست کارتخوان
+                <CreditCard size={18} style={{ color: 'var(--theme-accent, #8B5E3C)' }} /> درخواست کارتخوان
               </button>
             </div>
           )}
           <button 
             onClick={() => setTableHubOpen(!tableHubOpen)}
             className="cm-table-fab"
-            style={{ background: tableHubOpen ? '#EF4444' : 'var(--theme-surface)', color: tableHubOpen ? '#FFF' : 'var(--theme-text)' }}
+            style={{ background: tableHubOpen ? 'var(--color-red, #EF4444)' : 'var(--theme-surface)', color: tableHubOpen ? '#FFFFFF' : 'var(--theme-text)', border: '1px solid var(--theme-border)' }}
           >
             <Bell size={22} />
           </button>
@@ -1270,22 +1332,22 @@ export default function CafeMenuPage({ params }: { params?: Promise<{ cafeSlug: 
             <div className="cm-drawer-sheet" onClick={(e) => e.stopPropagation()}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingBottom: '12px', borderBottom: '1px solid var(--theme-border)' }}>
                 <h3 style={{ fontSize: '1.125rem', fontWeight: 800, margin: 0 }}>{selectedItem.title || selectedItem.name}</h3>
-                <button onClick={closeDrawer} style={{ background: 'var(--theme-bg-2)', border: 'none', borderRadius: '50%', width: '32px', height: '32px', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}>
+                <button onClick={closeDrawer} style={{ background: 'var(--theme-bg-2)', border: 'none', borderRadius: 'var(--theme-radius-full, 50%)', width: '32px', height: '32px', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', color: 'var(--theme-text)' }}>
                   <X size={18} />
                 </button>
               </div>
               
               <div style={{ padding: '16px 0' }}>
                 {selectedItem.imageUrl && (
-                  <img src={selectedItem.imageUrl} alt={selectedItem.title || selectedItem.name} style={{ width: '100%', height: '180px', objectFit: 'cover', borderRadius: '16px', marginBottom: '16px' }} />
+                  <img src={selectedItem.imageUrl} alt={selectedItem.title || selectedItem.name} style={{ width: '100%', height: '180px', objectFit: 'cover', borderRadius: 'var(--theme-radius)', marginBottom: '16px' }} />
                 )}
                 
                 <p style={{ fontSize: '0.875rem', lineHeight: 1.6, opacity: 0.85, marginBottom: '16px' }}>{selectedItem.description}</p>
                 
                 {/* Coffee Profile Radar */}
                 {selectedItem.coffeeProfile && (
-                  <div style={{ background: 'var(--theme-bg-2)', borderRadius: '16px', padding: '14px', marginBottom: '16px' }}>
-                    <h4 style={{ fontSize: '0.875rem', fontWeight: 800, marginBottom: '8px', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                  <div style={{ background: 'var(--theme-bg-2)', borderRadius: 'var(--theme-radius-lg)', padding: '14px', marginBottom: '16px', border: '1px solid var(--theme-border)' }}>
+                    <h4 style={{ fontSize: '0.875rem', fontWeight: 800, marginBottom: '8px', display: 'flex', alignItems: 'center', gap: '6px', color: 'var(--theme-text)' }}>
                       <Coffee size={16} /> پروفایل طعمی و ویژگی‌ها
                     </h4>
                     <CoffeeRadar profile={selectedItem.coffeeProfile} />
@@ -1296,15 +1358,15 @@ export default function CafeMenuPage({ params }: { params?: Promise<{ cafeSlug: 
                 {selectedItem.modifierGroups?.map((group) => (
                   <div key={group.id} style={{ marginBottom: '16px' }}>
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
-                      <h4 style={{ fontSize: '0.875rem', fontWeight: 800 }}>{group.name}</h4>
-                      {group.isRequired && <span style={{ fontSize: '11px', background: 'var(--theme-accent)', color: 'var(--theme-accent-fg)', padding: '2px 6px', borderRadius: '4px' }}>اجباری</span>}
+                      <h4 style={{ fontSize: '0.875rem', fontWeight: 800, color: 'var(--theme-text)' }}>{group.name}</h4>
+                      {group.isRequired && <span style={{ fontSize: '11px', background: 'var(--theme-accent)', color: 'var(--theme-accent-fg)', padding: '2px 6px', borderRadius: 'var(--theme-radius-sm, 4px)', fontWeight: 700 }}>اجباری</span>}
                     </div>
                     
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
                       {group.options.map((opt) => {
                         const isSelected = drawerModifiers.some((m) => m.id === opt.id);
                         return (
-                          <label key={opt.id} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '10px 14px', borderRadius: '12px', border: `1px solid ${isSelected ? 'var(--theme-accent)' : 'var(--theme-border)'}`, background: isSelected ? 'var(--theme-bg-2)' : 'transparent', cursor: 'pointer' }}>
+                          <label key={opt.id} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '10px 14px', borderRadius: 'var(--theme-radius)', border: `1px solid ${isSelected ? 'var(--theme-accent)' : 'var(--theme-border)'}`, background: isSelected ? 'var(--theme-bg-2)' : 'transparent', cursor: 'pointer', color: 'var(--theme-text)' }}>
                             <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                               <input 
                                 type={group.maxSelection === 1 ? 'radio' : 'checkbox'}
@@ -1336,13 +1398,13 @@ export default function CafeMenuPage({ params }: { params?: Promise<{ cafeSlug: 
                 ))}
 
                 {/* Quantity */}
-                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: '16px', padding: '12px 16px', background: 'var(--theme-bg-2)', borderRadius: '14px' }}>
-                  <span style={{ fontSize: '0.875rem', fontWeight: 800 }}>تعداد</span>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '12px', background: 'var(--theme-surface)', padding: '4px 8px', borderRadius: '10px', border: '1px solid var(--theme-border)' }}>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: '16px', padding: '12px 16px', background: 'var(--theme-bg-2)', borderRadius: 'var(--theme-radius)' }}>
+                  <span style={{ fontSize: '0.875rem', fontWeight: 800, color: 'var(--theme-text)' }}>تعداد</span>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '12px', background: 'var(--theme-surface)', padding: '4px 8px', borderRadius: 'var(--theme-radius-sm, 8px)', border: '1px solid var(--theme-border)' }}>
                     <button onClick={() => setDrawerQuantity(Math.max(1, drawerQuantity - 1))} style={{ background: 'none', border: 'none', color: 'var(--theme-accent)', cursor: 'pointer', display: 'flex', alignItems: 'center' }}>
                       <Minus size={18} />
                     </button>
-                    <span style={{ fontWeight: 800, minWidth: '20px', textAlign: 'center' }}>{drawerQuantity}</span>
+                    <span style={{ fontWeight: 800, minWidth: '20px', textAlign: 'center', color: 'var(--theme-text)' }}>{drawerQuantity}</span>
                     <button onClick={() => setDrawerQuantity(drawerQuantity + 1)} style={{ background: 'none', border: 'none', color: 'var(--theme-accent)', cursor: 'pointer', display: 'flex', alignItems: 'center' }}>
                       <Plus size={18} />
                     </button>
@@ -1354,7 +1416,7 @@ export default function CafeMenuPage({ params }: { params?: Promise<{ cafeSlug: 
                 <button 
                   onClick={() => addToCart(selectedItem, drawerQuantity, drawerModifiers)}
                   disabled={cafe.workflowMode === 'VIEW_ONLY'}
-                  style={{ width: '100%', background: 'var(--theme-accent)', color: 'var(--theme-accent-fg)', border: 'none', borderRadius: '14px', padding: '14px 18px', fontSize: '1rem', fontWeight: 800, display: 'flex', alignItems: 'center', justifyContent: 'space-between', cursor: 'pointer', boxShadow: '0 4px 12px rgba(0,0,0,0.15)' }}
+                  style={{ width: '100%', background: 'var(--theme-accent)', color: 'var(--theme-accent-fg)', border: 'none', borderRadius: 'var(--theme-radius)', padding: '14px 18px', fontSize: '1rem', fontWeight: 800, display: 'flex', alignItems: 'center', justifyContent: 'space-between', cursor: 'pointer', boxShadow: 'var(--theme-card-shadow)' }}
                 >
                   <span>افزودن به سبد سفارش</span>
                   <span>{((selectedItem.discountPrice || selectedItem.price) * drawerQuantity).toLocaleString()} تومان</span>
@@ -1370,15 +1432,15 @@ export default function CafeMenuPage({ params }: { params?: Promise<{ cafeSlug: 
             <div className="cm-modal-card" onClick={(e) => e.stopPropagation()}>
               {checkoutModal.type === 'PAY_AT_COUNTER' && (
                 <>
-                  <div style={{ width: '64px', height: '64px', borderRadius: '50%', background: '#D1FAE5', color: '#059669', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '14px' }}>
+                  <div style={{ width: '64px', height: '64px', borderRadius: 'var(--theme-radius-full, 50%)', background: 'rgba(16, 185, 129, 0.15)', color: '#10B981', border: '1px solid rgba(16, 185, 129, 0.3)', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '14px' }}>
                     <Check size={36} />
                   </div>
-                  <h3 style={{ fontSize: '1.25rem', fontWeight: 900, marginBottom: '8px' }}>سفارش ثبت شد</h3>
-                  <p style={{ fontSize: '0.875rem', opacity: 0.8, marginBottom: '16px', lineHeight: 1.5 }}>برای پرداخت به صندوق مراجعه کنید و کد زیر را به باریستا اعلام فرمایید:</p>
-                  <div style={{ background: 'var(--theme-bg-2)', width: '100%', padding: '16px 0', borderRadius: '14px', fontFamily: 'monospace', fontSize: '1.875rem', fontWeight: 900, color: 'var(--theme-accent)', marginBottom: '20px', border: '2px dashed var(--theme-accent)', letterSpacing: '4px' }}>
+                  <h3 style={{ fontSize: '1.25rem', fontWeight: 900, marginBottom: '8px', color: 'var(--theme-text)' }}>سفارش ثبت شد</h3>
+                  <p style={{ fontSize: '0.875rem', opacity: 0.8, marginBottom: '16px', lineHeight: 1.5, color: 'var(--theme-text-2)' }}>برای پرداخت به صندوق مراجعه کنید و کد زیر را به باریستا اعلام فرمایید:</p>
+                  <div style={{ background: 'var(--theme-bg-2)', width: '100%', padding: '16px 0', borderRadius: 'var(--theme-radius)', fontFamily: 'var(--font-mono, monospace)', fontSize: '1.875rem', fontWeight: 900, color: 'var(--theme-accent)', marginBottom: '20px', border: '2px dashed var(--theme-accent)', letterSpacing: '4px' }}>
                     {checkoutModal.orderCode}
                   </div>
-                  <button onClick={() => setCheckoutModal({ isOpen: false, type: '' })} style={{ width: '100%', background: 'var(--theme-accent)', color: 'var(--theme-accent-fg)', border: 'none', padding: '12px 0', borderRadius: '12px', fontSize: '0.9375rem', fontWeight: 800, cursor: 'pointer' }}>
+                  <button onClick={() => setCheckoutModal({ isOpen: false, type: '' })} style={{ width: '100%', background: 'var(--theme-accent)', color: 'var(--theme-accent-fg)', border: 'none', padding: '12px 0', borderRadius: 'var(--theme-radius)', fontSize: '0.9375rem', fontWeight: 800, cursor: 'pointer', boxShadow: 'var(--theme-card-shadow)' }}>
                     متوجه شدم
                   </button>
                 </>
@@ -1386,16 +1448,16 @@ export default function CafeMenuPage({ params }: { params?: Promise<{ cafeSlug: 
 
               {checkoutModal.type === 'TABLE_TAB_SPLIT' && (
                 <>
-                  <div style={{ width: '64px', height: '64px', borderRadius: '50%', background: '#DBEAFE', color: '#2563EB', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '14px' }}>
+                  <div style={{ width: '64px', height: '64px', borderRadius: 'var(--theme-radius-full, 50%)', background: 'rgba(37, 99, 235, 0.15)', color: '#3B82F6', border: '1px solid rgba(37, 99, 235, 0.3)', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '14px' }}>
                     <Receipt size={36} />
                   </div>
-                  <h3 style={{ fontSize: '1.25rem', fontWeight: 900, marginBottom: '8px' }}>افزوده شد به صورتحساب میز</h3>
-                  <p style={{ fontSize: '0.875rem', opacity: 0.8, marginBottom: '20px', lineHeight: 1.5 }}>سفارش شما با موفقیت ثبت شد و به تب باز میز اضافه گردید.</p>
+                  <h3 style={{ fontSize: '1.25rem', fontWeight: 900, marginBottom: '8px', color: 'var(--theme-text)' }}>افزوده شد به صورتحساب میز</h3>
+                  <p style={{ fontSize: '0.875rem', opacity: 0.8, marginBottom: '20px', lineHeight: 1.5, color: 'var(--theme-text-2)' }}>سفارش شما با موفقیت ثبت شد و به تب باز میز اضافه گردید.</p>
                   <div style={{ width: '100%', display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                    <button onClick={() => setCheckoutModal({ isOpen: false, type: '' })} style={{ width: '100%', background: 'var(--theme-bg-2)', color: 'var(--theme-text)', border: '1px solid var(--theme-border)', padding: '12px 0', borderRadius: '12px', fontSize: '0.875rem', fontWeight: 700, cursor: 'pointer' }}>
+                    <button onClick={() => setCheckoutModal({ isOpen: false, type: '' })} style={{ width: '100%', background: 'var(--theme-bg-2)', color: 'var(--theme-text)', border: '1px solid var(--theme-border)', padding: '12px 0', borderRadius: 'var(--theme-radius)', fontSize: '0.875rem', fontWeight: 700, cursor: 'pointer' }}>
                       مشاهده منو
                     </button>
-                    <button onClick={() => { alert('رفتن به صفحه پرداخت سهم من'); setCheckoutModal({ isOpen: false, type: '' }); }} style={{ width: '100%', background: 'var(--theme-accent)', color: 'var(--theme-accent-fg)', border: 'none', padding: '12px 0', borderRadius: '12px', fontSize: '0.875rem', fontWeight: 800, cursor: 'pointer' }}>
+                    <button onClick={() => { alert('رفتن به صفحه پرداخت سهم من'); setCheckoutModal({ isOpen: false, type: '' }); }} style={{ width: '100%', background: 'var(--theme-accent)', color: 'var(--theme-accent-fg)', border: 'none', padding: '12px 0', borderRadius: 'var(--theme-radius)', fontSize: '0.875rem', fontWeight: 800, cursor: 'pointer', boxShadow: 'var(--theme-card-shadow)' }}>
                       پرداخت سهم من الان
                     </button>
                   </div>

@@ -7,6 +7,7 @@
     "build": "npx prisma generate && next build",
     "start": "next start",
     "lint": "eslint",
+    "test": "tsx tests/runner.ts",
     "seed": "npx ts-node --esm prisma/seed.ts",
     "db:reset": "npx prisma migrate reset --force && npm run seed"
   },
