@@ -1,0 +1,292 @@
+// This is your Prisma schema file for CafeChi (کافه‌چی)
+// Prisma 7 — uses prisma-client provider with explicit output path
+
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "sqlite"
+  // URL is managed in prisma.config.ts
+}
+
+// ─────────────────────────────────────────
+// Models
+// ─────────────────────────────────────────
+
+model User {
+  id             String   @id @default(cuid())
+  phone          String   @unique
+  passwordHash   String
+  fullName       String
+  role           String   @default("CUSTOMER")
+  loyaltyPoints  Int      @default(0)
+  createdAt      DateTime @default(now())
+
+  // Relations
+  ownedCafes        Cafe[]            @relation("CafeOwner")
+  staffPermissions  StaffPermission[]
+  orders            Order[]
+  loyaltyStamps     LoyaltyStamp[]
+
+  @@index([phone])
+  @@map("users")
+}
+
+model Cafe {
+  id                     String   @id @default(cuid())
+  ownerId                String
+  name                   String
+  slug                   String   @unique
+  description            String?
+  logoUrl                String?
+  coverUrl               String?
+  address                String
+  latitude               Float
+  longitude              Float
+  phoneNumber            String
+  businessType           String   @default("CAFE")
+  workflowMode           String   @default("PAY_UPFRONT_BUZZER")
+  themeId                String   @default("NORDIC_MINIMAL")
+  amenities              String   @default("{\"wifi\":true,\"smoking\":false,\"outdoor\":false,\"board_games\":false,\"work_friendly\":true,\"pet_friendly\":false}")
+  openingHours           String   @default("{\"mon\":{\"open\":\"08:00\",\"close\":\"22:00\"},\"tue\":{\"open\":\"08:00\",\"close\":\"22:00\"},\"wed\":{\"open\":\"08:00\",\"close\":\"22:00\"},\"thu\":{\"open\":\"08:00\",\"close\":\"22:00\"},\"fri\":{\"open\":\"09:00\",\"close\":\"23:00\"},\"sat\":{\"open\":\"09:00\",\"close\":\"23:00\"},\"sun\":{\"open\":\"10:00\",\"close\":\"21:00\"}}")
+  isApproved             Boolean  @default(false)
+  isActive               Boolean  @default(true)
+  rushHourBufferMinutes  Int      @default(0)
+  createdAt              DateTime @default(now())
+
+  // Relations
+  owner              User                  @relation("CafeOwner", fields: [ownerId], references: [id])
+  kdsStations        KdsStation[]
+  staffPermissions   StaffPermission[]
+  categories         Category[]
+  menuItems          MenuItem[]
+  tables             Table[]
+  orders             Order[]
+  tableServiceReqs   TableServiceRequest[]
+  loyaltyStamps      LoyaltyStamp[]
+
+  @@index([slug])
+  @@map("cafes")
+}
+
+model KdsStation {
+  id          String  @id @default(cuid())
+  cafeId      String
+  name        String
+  stationType String
+  isActive    Boolean @default(true)
+
+  // Relations
+  cafe             Cafe              @relation(fields: [cafeId], references: [id], onDelete: Cascade)
+  staffPermissions StaffPermission[]
+  categories       Category[]
+  orderItems       OrderItem[]
+
+  @@map("kds_stations")
+}
+
+model StaffPermission {
+  id               String  @id @default(cuid())
+  userId           String
+  cafeId           String
+  stationId        String?
+  canEditMenu      Boolean @default(false)
+  canToggleStock   Boolean @default(true)
+  canEditPrices    Boolean @default(false)
+  canManageOrders  Boolean @default(true)
+  canViewAnalytics Boolean @default(false)
+
+  // Relations
+  user    User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  cafe    Cafe        @relation(fields: [cafeId], references: [id], onDelete: Cascade)
+  station KdsStation? @relation(fields: [stationId], references: [id], onDelete: SetNull)
+
+  @@unique([userId, cafeId])
+  @@map("staff_permissions")
+}
+
+model Category {
+  id           String  @id @default(cuid())
+  cafeId       String
+  stationId    String?
+  name         String
+  displayOrder Int     @default(0)
+  isActive     Boolean @default(true)
+
+  // Relations
+  cafe      Cafe        @relation(fields: [cafeId], references: [id], onDelete: Cascade)
+  station   KdsStation? @relation(fields: [stationId], references: [id], onDelete: SetNull)
+  menuItems MenuItem[]
+
+  @@map("categories")
+}
+
+model MenuItem {
+  id                  String   @id @default(cuid())
+  cafeId              String
+  categoryId          String
+  title               String
+  description         String?
+  price               Int
+  discountPrice       Int?
+  imageUrl            String?
+  isAvailable         Boolean  @default(true)
+  dailyStockRemaining Int?
+  prepTimeMinutes     Int      @default(5)
+  calories            Int?
+  tags                String   @default("[]")
+  coffeeProfile       String?
+  allergens           String   @default("[]")
+  displayOrder        Int      @default(0)
+  reorderCount        Int      @default(0)
+
+  // Relations
+  cafe           Cafe                @relation(fields: [cafeId], references: [id], onDelete: Cascade)
+  category       Category            @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+  modifierGroups ItemModifierGroup[]
+  orderItems     OrderItem[]
+
+  @@map("menu_items")
+}
+
+model ItemModifierGroup {
+  id           String  @id @default(cuid())
+  itemId       String
+  name         String
+  isRequired   Boolean @default(false)
+  minSelection Int     @default(0)
+  maxSelection Int     @default(1)
+
+  // Relations
+  item    MenuItem             @relation(fields: [itemId], references: [id], onDelete: Cascade)
+  options ItemModifierOption[]
+
+  @@map("item_modifier_groups")
+}
+
+model ItemModifierOption {
+  id         String  @id @default(cuid())
+  groupId    String
+  name       String
+  priceDelta Int     @default(0)
+  isDefault  Boolean @default(false)
+
+  // Relations
+  group ItemModifierGroup @relation(fields: [groupId], references: [id], onDelete: Cascade)
+
+  @@map("item_modifier_options")
+}
+
+model Table {
+  id             String  @id @default(cuid())
+  cafeId         String
+  tableNumber    String
+  qrToken        String  @unique
+  isOccupied     Boolean @default(false)
+  currentOrderId String?
+
+  // Relations
+  cafe             Cafe                  @relation(fields: [cafeId], references: [id], onDelete: Cascade)
+  orders           Order[]
+  tableServiceReqs TableServiceRequest[]
+
+  @@map("tables")
+}
+
+model Order {
+  id             String   @id @default(cuid())
+  cafeId         String
+  tableId        String?
+  customerId     String?
+  orderCode      String   @unique
+  buzzerNumber   Int?
+  status         String   @default("PENDING_PAYMENT")
+  paymentMode    String   @default("PAY_UPFRONT")
+  paymentStatus  String   @default("UNPAID")
+  subtotalAmount Int
+  discountAmount Int      @default(0)
+  tipAmount      Int      @default(0)
+  totalAmount    Int
+  paidAmount     Int      @default(0)
+  customerNotes  String?
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  // Relations
+  cafe          Cafe           @relation(fields: [cafeId], references: [id], onDelete: Cascade)
+  table         Table?         @relation(fields: [tableId], references: [id], onDelete: SetNull)
+  customer      User?          @relation(fields: [customerId], references: [id], onDelete: SetNull)
+  orderItems    OrderItem[]
+  splitPayments SplitPayment[]
+
+  @@map("orders")
+}
+
+model OrderItem {
+  id                String  @id @default(cuid())
+  orderId           String
+  itemId            String
+  stationId         String?
+  quantity          Int
+  unitPrice         Int
+  totalPrice        Int
+  selectedModifiers String  @default("[]")
+  stationStatus     String  @default("PENDING")
+  itemNotes         String?
+
+  // Relations
+  order   Order       @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  item    MenuItem    @relation(fields: [itemId], references: [id])
+  station KdsStation? @relation(fields: [stationId], references: [id], onDelete: SetNull)
+
+  @@map("order_items")
+}
+
+model SplitPayment {
+  id          String   @id @default(cuid())
+  orderId     String
+  payerName   String
+  amount      Int
+  paidItemIds String   @default("[]")
+  createdAt   DateTime @default(now())
+
+  // Relations
+  order Order @relation(fields: [orderId], references: [id], onDelete: Cascade)
+
+  @@map("split_payments")
+}
+
+model TableServiceRequest {
+  id          String   @id @default(cuid())
+  cafeId      String
+  tableId     String
+  tableNumber String
+  requestType String
+  note        String?
+  status      String   @default("PENDING")
+  createdAt   DateTime @default(now())
+
+  // Relations
+  cafe  Cafe  @relation(fields: [cafeId], references: [id], onDelete: Cascade)
+  table Table @relation(fields: [tableId], references: [id], onDelete: Cascade)
+
+  @@map("table_service_requests")
+}
+
+model LoyaltyStamp {
+  id               String @id @default(cuid())
+  userId           String
+  cafeId           String
+  stampsCount      Int    @default(0)
+  maxStamps        Int    @default(6)
+  freeDrinksEarned Int    @default(0)
+
+  // Relations
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  cafe Cafe @relation(fields: [cafeId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, cafeId])
+  @@map("loyalty_stamps")
+}
