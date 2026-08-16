@@ -91,30 +91,49 @@ export async function POST(request: Request) {
         ? "CONFIRMED"
         : "PENDING_PAYMENT";
 
-    const order = await db.order.create({
-      data: {
-        cafeId,
-        tableId: tableId ?? null,
-        customerId: session?.sub ?? null,
-        orderCode: generateOrderCode(),
-        buzzerNumber,
-        status: initialStatus,
-        paymentMode,
-        paymentStatus: paymentMode === "TABLE_TAB_SPLIT" ? "UNPAID" : "UNPAID",
-        subtotalAmount,
-        totalAmount: subtotalAmount,
-        customerNotes: customerNotes ?? null,
-        orderItems: {
-          create: orderItemsData,
-        },
-      },
-      include: {
-        orderItems: {
-          include: { item: { select: { title: true, imageUrl: true } } },
-        },
-        table: { select: { tableNumber: true } },
-      },
-    });
+    let order;
+    let attempts = 0;
+    while (attempts < 5) {
+      try {
+        order = await db.order.create({
+          data: {
+            cafeId,
+            tableId: tableId ?? null,
+            customerId: session?.sub ?? null,
+            orderCode: generateOrderCode(),
+            buzzerNumber,
+            status: initialStatus,
+            paymentMode,
+            paymentStatus: paymentMode === "TABLE_TAB_SPLIT" ? "UNPAID" : "UNPAID",
+            subtotalAmount,
+            totalAmount: subtotalAmount,
+            customerNotes: customerNotes ?? null,
+            orderItems: {
+              create: orderItemsData,
+            },
+          },
+          include: {
+            orderItems: {
+              include: { item: { select: { title: true, imageUrl: true } } },
+            },
+            table: { select: { tableNumber: true } },
+          },
+        });
+        break;
+      } catch (err: any) {
+        attempts++;
+        if (attempts >= 5 || err?.code !== 'P2002') {
+          throw err;
+        }
+      }
+    }
+
+    if (!order) {
+      return NextResponse.json(
+        { success: false, error: "خطا در ثبت سفارش" },
+        { status: 500 }
+      );
+    }
 
     // Update reorder counts
     await Promise.all(
