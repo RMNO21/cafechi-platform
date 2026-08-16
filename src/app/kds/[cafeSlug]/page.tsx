@@ -315,65 +315,100 @@ export default function KDSPage(props: PageProps) {
     return `${m}:${s}`;
   };
 
-  const getSlaClass = (createdAt: string) => {
+  const getSlaBadgeStyle = (createdAt: string) => {
     const elapsedMinutes = (now - new Date(createdAt).getTime()) / 60000;
-    if (elapsedMinutes < 5) return 'text-green-600 bg-green-50';
-    if (elapsedMinutes < 10) return 'text-amber-600 bg-amber-50';
-    return 'text-red-600 bg-red-50 animate-pulse';
+    if (elapsedMinutes < 5) return { color: '#10B981', background: 'rgba(16, 185, 129, 0.15)', border: '1px solid rgba(16, 185, 129, 0.3)' };
+    if (elapsedMinutes < 10) return { color: '#F59E0B', background: 'rgba(245, 158, 11, 0.15)', border: '1px solid rgba(245, 158, 11, 0.3)' };
+    return { color: '#EF4444', background: 'rgba(239, 68, 68, 0.25)', border: '1px solid rgba(239, 68, 68, 0.4)', animation: 'pulse 1.5s infinite' };
   };
 
   const renderOrderCard = (order: Order) => {
     let visibleItems = order.items || order.orderItems || [];
     if (station !== 'ALL' && station !== 'EXPEDITER') {
-      visibleItems = visibleItems.filter((item: any) => item.station === station || item.stationId === station);
+      visibleItems = visibleItems.filter((item: any) => item.station === station || item.stationId === station || item.stationType === station);
     }
 
     if (visibleItems.length === 0 && station !== 'ALL' && station !== 'EXPEDITER') return null;
 
-    const tableNum = order.tableNumber || order.table?.tableNumber;
+    const tableNum = order.tableNumber || (order as any).table?.tableNumber;
 
     return (
-      <div key={order.id} className="bg-white rounded-lg shadow-sm border p-4 mb-4 flex flex-col gap-3">
-        <div className="flex justify-between items-center border-b pb-2">
-          <div className="flex items-center gap-2">
-            <span className="font-bold text-lg">{order.code || order.orderCode}</span>
+      <div 
+        key={order.id} 
+        style={{ 
+          background: '#1E293B', 
+          borderRadius: '12px', 
+          border: '1px solid #334155', 
+          padding: '16px', 
+          marginBottom: '14px', 
+          display: 'flex', 
+          flexDirection: 'column', 
+          gap: '12px',
+          boxShadow: '0 4px 12px rgba(0, 0, 0, 0.25)',
+          color: '#F8FAFC'
+        }}
+      >
+        {/* Header: Code, Table/Buzzer & SLA Timer */}
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid #334155', paddingBottom: '10px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
+            <span style={{ fontWeight: 900, fontSize: '1.25rem', color: '#F8FAFC', letterSpacing: '1px' }}>
+              {order.code || order.orderCode}
+            </span>
             {tableNum && (
-              <span className="bg-gray-100 text-gray-700 px-2 py-0.5 rounded text-sm">
+              <span style={{ background: '#334155', color: '#94A3B8', padding: '2px 8px', borderRadius: '6px', fontSize: '0.75rem', fontWeight: 700 }}>
                 میز {tableNum}
               </span>
             )}
             {order.buzzerNumber && (
-              <span className="bg-blue-100 text-blue-700 px-2 py-0.5 rounded text-sm">
+              <span style={{ background: 'rgba(59, 130, 246, 0.2)', color: '#60A5FA', border: '1px solid rgba(59, 130, 246, 0.4)', padding: '2px 8px', borderRadius: '6px', fontSize: '0.75rem', fontWeight: 700 }}>
                 پیجر {order.buzzerNumber}
               </span>
             )}
           </div>
-          <div className={`px-2 py-1 rounded flex items-center gap-1 ${getSlaClass(order.createdAt)}`}>
-            <Clock className="w-4 h-4" />
-            <span className="font-mono text-sm" dir="ltr">
+
+          <div style={{ display: 'flex', alignItems: 'center', gap: '6px', padding: '4px 10px', borderRadius: '8px', fontSize: '0.8125rem', fontWeight: 800, ...getSlaBadgeStyle(order.createdAt) }}>
+            <Clock size={15} />
+            <span dir="ltr" style={{ fontFamily: 'monospace' }}>
               {formatElapsedTime(order.createdAt)}
             </span>
           </div>
         </div>
 
-        <div className="flex flex-col gap-2">
+        {/* Order Items */}
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
           {visibleItems.map((item: any, idx: number) => (
-            <div key={item.id || idx} className="flex justify-between items-center bg-gray-50 p-2 rounded">
+            <div 
+              key={item.id || idx} 
+              style={{ 
+                display: 'flex', 
+                justifyContent: 'space-between', 
+                alignItems: 'center', 
+                background: '#0F172A', 
+                padding: '10px 12px', 
+                borderRadius: '8px',
+                border: '1px solid #1E293B'
+              }}
+            >
               <div>
-                <span className="font-medium">
-                  {item.quantity}x {item.name}
-                </span>
-                {item.notes && <div className="text-sm text-gray-500 mt-1">{item.notes}</div>}
+                <div style={{ fontWeight: 700, fontSize: '0.875rem', color: '#F1F5F9' }}>
+                  {item.quantity}x {item.item?.title || item.item?.name || item.title || item.name}
+                </div>
+                {item.notes && <div style={{ fontSize: '0.75rem', color: '#94A3B8', marginTop: '2px' }}>{item.notes}</div>}
               </div>
-              <div className="flex items-center gap-2">
+
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                 <span
-                  className={`text-xs px-2 py-1 rounded-full ${
-                    item.stationStatus === 'DONE'
-                      ? 'bg-green-100 text-green-700'
+                  style={{
+                    fontSize: '0.75rem',
+                    padding: '3px 8px',
+                    borderRadius: '6px',
+                    fontWeight: 700,
+                    ...(item.stationStatus === 'DONE'
+                      ? { background: 'rgba(16, 185, 129, 0.2)', color: '#34D399', border: '1px solid rgba(16, 185, 129, 0.3)' }
                       : item.stationStatus === 'IN_PROGRESS'
-                      ? 'bg-amber-100 text-amber-700'
-                      : 'bg-gray-200 text-gray-700'
-                  }`}
+                      ? { background: 'rgba(245, 158, 11, 0.2)', color: '#FBBF24', border: '1px solid rgba(245, 158, 11, 0.3)' }
+                      : { background: '#334155', color: '#CBD5E1' })
+                  }}
                 >
                   {item.stationStatus === 'DONE'
                     ? 'آماده'
@@ -384,9 +419,10 @@ export default function KDSPage(props: PageProps) {
                 {item.stationStatus !== 'DONE' && (
                   <button
                     onClick={() => advanceItemStatus(order.id, item.id, item.stationStatus)}
-                    className="p-1 rounded hover:bg-gray-200 text-gray-600 transition"
+                    style={{ background: '#334155', color: '#F8FAFC', border: 'none', borderRadius: '6px', padding: '4px', cursor: 'pointer', display: 'flex', alignItems: 'center' }}
+                    title="تغییر وضعیت آیتم"
                   >
-                    <ChevronRight className="w-4 h-4" />
+                    <ChevronRight size={16} />
                   </button>
                 )}
               </div>
@@ -394,167 +430,261 @@ export default function KDSPage(props: PageProps) {
           ))}
         </div>
 
-        {station === 'EXPEDITER' || station === 'ALL' ? (
-          <div className="mt-2 pt-2 border-t flex justify-end">
+        {/* Action Button */}
+        {(station === 'EXPEDITER' || station === 'ALL') && order.status !== 'DELIVERED' && (
+          <div style={{ marginTop: '4px', paddingTop: '10px', borderTop: '1px solid #334155', display: 'flex', justifyContent: 'flex-end' }}>
             <button
               onClick={() => advanceOrderStatus(order.id, order.status)}
-              className="bg-blue-600 text-white px-4 py-2 rounded shadow hover:bg-blue-700 transition flex items-center gap-2"
+              style={{
+                background: '#2563EB',
+                color: '#FFFFFF',
+                border: 'none',
+                padding: '8px 16px',
+                borderRadius: '8px',
+                fontSize: '0.875rem',
+                fontWeight: 800,
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '6px',
+                boxShadow: '0 2px 4px rgba(37, 99, 235, 0.3)'
+              }}
             >
-              <Zap className="w-4 h-4" />
+              <Zap size={16} />
               مرحله بعد
             </button>
           </div>
-        ) : null}
+        )}
       </div>
     );
   };
 
   return (
-    <div className="min-h-screen bg-gray-100 flex flex-col font-sans" dir="rtl">
-      {/* Toast */}
+    <div style={{ minHeight: '100vh', background: '#0B0F19', color: '#F8FAFC', display: 'flex', flexDirection: 'column', fontFamily: 'IRANSans, system-ui, sans-serif' }} dir="rtl">
+      {/* Toast Notification */}
       {toastMessage && (
-        <div className="fixed bottom-4 left-4 right-4 md:right-auto md:w-96 bg-gray-800 text-white p-4 rounded-lg shadow-lg flex items-center justify-between z-50 animate-in slide-in-from-bottom-5">
-          <div className="flex items-center gap-2">
-            <Bell className="w-5 h-5 text-yellow-400" />
-            <span>{toastMessage}</span>
+        <div style={{ position: 'fixed', bottom: '20px', left: '20px', right: '20px', maxWidth: '400px', background: '#1E293B', color: '#F8FAFC', padding: '14px 18px', borderRadius: '12px', border: '1px solid #3B82F6', boxShadow: '0 10px 25px rgba(0,0,0,0.5)', display: 'flex', alignItems: 'center', justifyContent: 'space-between', zIndex: 60 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+            <Bell size={20} style={{ color: '#F59E0B' }} />
+            <span style={{ fontWeight: 700, fontSize: '0.875rem' }}>{toastMessage}</span>
           </div>
-          <button onClick={() => setToastMessage(null)} className="text-gray-400 hover:text-white">
-            <X className="w-5 h-5" />
+          <button onClick={() => setToastMessage(null)} style={{ background: 'none', border: 'none', color: '#94A3B8', cursor: 'pointer' }}>
+            <X size={18} />
           </button>
         </div>
       )}
 
-      {/* Table Service Banners */}
-      <div className="fixed top-0 left-0 right-0 z-40 flex flex-col items-center gap-2 p-4 pointer-events-none">
-        {tableServices.map((ts) => (
-          <div
-            key={ts.id}
-            className="bg-blue-600 text-white px-6 py-3 rounded-full shadow-xl flex items-center gap-4 pointer-events-auto animate-in slide-in-from-top-5"
-          >
-            <AlertTriangle className="w-5 h-5 text-yellow-300" />
-            <span className="font-bold">
-              میز {ts.tableNumber}: {ts.requestType === 'REQUEST_BILL' || ts.type === 'REQUEST_BILL' ? 'درخواست صورتحساب' : ts.requestType === 'REQUEST_WATER' ? 'درخواست آب' : ts.requestType === 'REQUEST_POS' ? 'درخواست کارتخوان' : 'درخواست سرویس / گارسون'}
-            </span>
-            <button
-              onClick={() => dismissTableService(ts.id)}
-              className="bg-blue-700 hover:bg-blue-800 p-1.5 rounded-full transition"
+      {/* Table Service Alerts Floating Banner */}
+      {tableServices.length > 0 && (
+        <div style={{ position: 'fixed', top: '20px', left: '50%', transform: 'translateX(-50%)', zIndex: 50, display: 'flex', flexDirection: 'column', gap: '8px', width: '90%', maxWidth: '500px' }}>
+          {tableServices.map((ts) => (
+            <div
+              key={ts.id}
+              style={{
+                background: '#2563EB',
+                color: '#FFFFFF',
+                padding: '12px 18px',
+                borderRadius: '50px',
+                boxShadow: '0 10px 30px rgba(37, 99, 235, 0.4)',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                border: '1px solid #60A5FA'
+              }}
             >
-              <CheckCircle className="w-5 h-5" />
-            </button>
-          </div>
-        ))}
-      </div>
-
-      {/* Header */}
-      <header className="bg-white shadow-sm border-b px-4 py-3 flex flex-col md:flex-row justify-between items-center gap-4 z-30 relative">
-        <h1 className="text-xl font-bold text-gray-800">CafeChi KDS</h1>
-        <div className="flex bg-gray-100 rounded-lg p-1 overflow-x-auto w-full md:w-auto">
-          {(Object.keys(STATION_LABELS) as Station[]).map((st) => (
-            <button
-              key={st}
-              onClick={() => setStation(st)}
-              className={`whitespace-nowrap px-4 py-2 rounded-md text-sm font-medium transition ${
-                station === st ? 'bg-white shadow text-blue-600' : 'text-gray-600 hover:text-gray-900'
-              }`}
-            >
-              {STATION_LABELS[st]}
-            </button>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                <AlertTriangle size={20} style={{ color: '#FDE047' }} />
+                <span style={{ fontWeight: 800, fontSize: '0.9375rem' }}>
+                  میز {ts.tableNumber}: {ts.requestType === 'REQUEST_BILL' || ts.type === 'REQUEST_BILL' ? 'درخواست صورتحساب' : ts.requestType === 'REQUEST_WATER' ? 'درخواست آب' : ts.requestType === 'REQUEST_POS' ? 'درخواست کارتخوان' : 'درخواست سرویس / سالن‌کار'}
+                </span>
+              </div>
+              <button
+                onClick={() => dismissTableService(ts.id)}
+                style={{ background: 'rgba(255,255,255,0.2)', border: 'none', color: '#FFFFFF', padding: '6px', borderRadius: '50%', cursor: 'pointer', display: 'flex', alignItems: 'center' }}
+                title="تأیید و رسیدگی"
+              >
+                <CheckCircle size={20} />
+              </button>
+            </div>
           ))}
         </div>
+      )}
+
+      {/* Top Navigation Bar */}
+      <header style={{ background: '#1E293B', borderBottom: '1px solid #334155', padding: '16px 24px', display: 'flex', flexWrap: 'wrap', justifyContent: 'space-between', alignItems: 'center', gap: '16px', zIndex: 30 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+          <div style={{ background: '#2563EB', color: '#FFFFFF', width: '36px', height: '36px', borderRadius: '8px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 900 }}>
+            KDS
+          </div>
+          <div>
+            <h1 style={{ fontSize: '1.25rem', fontWeight: 900, margin: 0, color: '#F8FAFC' }}>کافه‌چی — پنل نمایش سفارشات باریستا</h1>
+            <span style={{ fontSize: '0.75rem', color: '#94A3B8' }}>{cafeSlug}</span>
+          </div>
+        </div>
+
+        {/* Station Filter Tabs */}
+        <div style={{ display: 'flex', background: '#0F172A', padding: '4px', borderRadius: '10px', gap: '4px', overflowX: 'auto' }}>
+          {(Object.keys(STATION_LABELS) as Station[]).map((st) => {
+            const isActive = station === st;
+            return (
+              <button
+                key={st}
+                onClick={() => setStation(st)}
+                style={{
+                  padding: '8px 16px',
+                  borderRadius: '8px',
+                  border: 'none',
+                  fontSize: '0.875rem',
+                  fontWeight: 800,
+                  cursor: 'pointer',
+                  whiteSpace: 'nowrap',
+                  background: isActive ? '#2563EB' : 'transparent',
+                  color: isActive ? '#FFFFFF' : '#94A3B8',
+                  transition: 'all 0.2s ease'
+                }}
+              >
+                {STATION_LABELS[st]}
+              </button>
+            );
+          })}
+        </div>
+
+        {/* Stock 86 Toggle Button */}
         <button
           onClick={loadMenuStock}
-          className="bg-red-50 text-red-600 hover:bg-red-100 px-4 py-2 rounded-lg font-medium flex items-center gap-2 transition"
+          style={{
+            background: 'rgba(239, 68, 68, 0.15)',
+            color: '#F87171',
+            border: '1px solid rgba(239, 68, 68, 0.3)',
+            padding: '8px 16px',
+            borderRadius: '8px',
+            fontWeight: 800,
+            fontSize: '0.875rem',
+            cursor: 'pointer',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '8px'
+          }}
         >
-          <Package className="w-5 h-5" />
-          موجودی (86)
+          <Package size={18} />
+          مدیریت موجودی (86)
         </button>
       </header>
 
-      {/* Kanban Board */}
-      <main className="flex-1 overflow-x-auto p-4">
-        <div className="flex gap-4 h-full min-w-max">
-          {/* Column 1 */}
-          <div className="w-80 flex flex-col bg-gray-50 rounded-xl p-3 h-full">
-            <h2 className="font-bold text-gray-700 mb-4 px-2 flex items-center gap-2">
-              <span className="w-3 h-3 rounded-full bg-blue-500"></span>
-              جدید ({newOrders.length})
-            </h2>
-            <div className="flex-1 overflow-y-auto pr-1 custom-scrollbar">
-              {newOrders.map(renderOrderCard)}
+      {/* Main Kanban Board (4 Columns Grid) */}
+      <main style={{ flex: 1, padding: '24px', overflowX: 'auto' }}>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, minmax(290px, 1fr))', gap: '20px', minWidth: '1200px', height: '100%' }}>
+          
+          {/* Column 1: New Orders */}
+          <div style={{ background: '#0F172A', borderRadius: '14px', border: '1px solid #1E293B', padding: '16px', display: 'flex', flexDirection: 'column' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '16px', paddingBottom: '10px', borderBottom: '2px solid #3B82F6' }}>
+              <span style={{ width: '10px', height: '10px', borderRadius: '50%', background: '#3B82F6' }} />
+              <h2 style={{ fontSize: '1rem', fontWeight: 900, margin: 0, color: '#F8FAFC' }}>
+                جدید ({newOrders.length})
+              </h2>
+            </div>
+            <div style={{ flex: 1, overflowY: 'auto' }}>
+              {newOrders.length === 0 ? (
+                <div style={{ textAlign: 'center', color: '#64748B', padding: '40px 0', fontSize: '0.875rem' }}>سفارش جدیدی ثبت نشده</div>
+              ) : (
+                newOrders.map(renderOrderCard)
+              )}
             </div>
           </div>
 
-          {/* Column 2 */}
-          <div className="w-80 flex flex-col bg-gray-50 rounded-xl p-3 h-full">
-            <h2 className="font-bold text-gray-700 mb-4 px-2 flex items-center gap-2">
-              <span className="w-3 h-3 rounded-full bg-amber-500"></span>
-              در حال آماده‌سازی ({inPrepOrders.length})
-            </h2>
-            <div className="flex-1 overflow-y-auto pr-1 custom-scrollbar">
-              {inPrepOrders.map(renderOrderCard)}
+          {/* Column 2: In Preparation */}
+          <div style={{ background: '#0F172A', borderRadius: '14px', border: '1px solid #1E293B', padding: '16px', display: 'flex', flexDirection: 'column' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '16px', paddingBottom: '10px', borderBottom: '2px solid #F59E0B' }}>
+              <span style={{ width: '10px', height: '10px', borderRadius: '50%', background: '#F59E0B' }} />
+              <h2 style={{ fontSize: '1rem', fontWeight: 900, margin: 0, color: '#F8FAFC' }}>
+                در حال آماده‌سازی ({inPrepOrders.length})
+              </h2>
+            </div>
+            <div style={{ flex: 1, overflowY: 'auto' }}>
+              {inPrepOrders.length === 0 ? (
+                <div style={{ textAlign: 'center', color: '#64748B', padding: '40px 0', fontSize: '0.875rem' }}>آیتمی در حال آماده‌سازی نیست</div>
+              ) : (
+                inPrepOrders.map(renderOrderCard)
+              )}
             </div>
           </div>
 
-          {/* Column 3 */}
-          <div className="w-80 flex flex-col bg-gray-50 rounded-xl p-3 h-full">
-            <h2 className="font-bold text-gray-700 mb-4 px-2 flex items-center gap-2">
-              <span className="w-3 h-3 rounded-full bg-green-500"></span>
-              آماده تحویل ({readyOrders.length})
-            </h2>
-            <div className="flex-1 overflow-y-auto pr-1 custom-scrollbar">
-              {readyOrders.map(renderOrderCard)}
+          {/* Column 3: Ready Orders */}
+          <div style={{ background: '#0F172A', borderRadius: '14px', border: '1px solid #1E293B', padding: '16px', display: 'flex', flexDirection: 'column' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '16px', paddingBottom: '10px', borderBottom: '2px solid #10B981' }}>
+              <span style={{ width: '10px', height: '10px', borderRadius: '50%', background: '#10B981' }} />
+              <h2 style={{ fontSize: '1rem', fontWeight: 900, margin: 0, color: '#F8FAFC' }}>
+                آماده تحویل ({readyOrders.length})
+              </h2>
+            </div>
+            <div style={{ flex: 1, overflowY: 'auto' }}>
+              {readyOrders.length === 0 ? (
+                <div style={{ textAlign: 'center', color: '#64748B', padding: '40px 0', fontSize: '0.875rem' }}>سفارشی آماده تحویل نیست</div>
+              ) : (
+                readyOrders.map(renderOrderCard)
+              )}
             </div>
           </div>
 
-          {/* Column 4 */}
-          <div className="w-80 flex flex-col bg-gray-50 rounded-xl p-3 h-full opacity-70">
-            <h2 className="font-bold text-gray-700 mb-4 px-2 flex items-center gap-2">
-              <span className="w-3 h-3 rounded-full bg-gray-500"></span>
-              تحویل شد
-            </h2>
-            <div className="flex-1 overflow-y-auto pr-1 custom-scrollbar">
-              {deliveredOrders.map(renderOrderCard)}
+          {/* Column 4: Delivered Orders */}
+          <div style={{ background: '#0F172A', borderRadius: '14px', border: '1px solid #1E293B', padding: '16px', display: 'flex', flexDirection: 'column', opacity: 0.85 }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '16px', paddingBottom: '10px', borderBottom: '2px solid #64748B' }}>
+              <span style={{ width: '10px', height: '10px', borderRadius: '50%', background: '#64748B' }} />
+              <h2 style={{ fontSize: '1rem', fontWeight: 900, margin: 0, color: '#F8FAFC' }}>
+                تحویل شد ({deliveredOrders.length})
+              </h2>
+            </div>
+            <div style={{ flex: 1, overflowY: 'auto' }}>
+              {deliveredOrders.length === 0 ? (
+                <div style={{ textAlign: 'center', color: '#64748B', padding: '40px 0', fontSize: '0.875rem' }}>سفارش اخیر تحویل‌شده‌‌ای نیست</div>
+              ) : (
+                deliveredOrders.map(renderOrderCard)
+              )}
             </div>
           </div>
+
         </div>
       </main>
 
-      {/* Stock Modal */}
+      {/* Stock Modal (86 Toggle) */}
       {isStockModalOpen && (
-        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
-          <div className="bg-white rounded-xl shadow-2xl w-full max-w-lg overflow-hidden flex flex-col max-h-[80vh]">
-            <div className="p-4 border-b flex justify-between items-center bg-gray-50">
-              <h2 className="font-bold text-lg flex items-center gap-2">
-                <Package className="w-5 h-5 text-gray-500" />
-                مدیریت موجودی (86)
-              </h2>
-              <button
-                onClick={() => setIsStockModalOpen(false)}
-                className="text-gray-400 hover:text-gray-700"
-              >
-                <X className="w-6 h-6" />
+        <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.8)', backdropFilter: 'blur(4px)', zIndex: 100, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '20px' }}>
+          <div style={{ background: '#1E293B', borderRadius: '16px', border: '1px solid #334155', width: '100%', maxWidth: '500px', maxHeight: '80vh', display: 'flex', flexDirection: 'column', boxShadow: '0 20px 40px rgba(0,0,0,0.6)' }}>
+            <div style={{ padding: '16px 20px', borderBottom: '1px solid #334155', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <h3 style={{ fontSize: '1.125rem', fontWeight: 900, margin: 0, display: 'flex', alignItems: 'center', gap: '8px', color: '#F8FAFC' }}>
+                <Package size={20} style={{ color: '#EF4444' }} />
+                مدیریت موجودی منو (عدم موجودی - 86)
+              </h3>
+              <button onClick={() => setIsStockModalOpen(false)} style={{ background: '#0F172A', border: 'none', borderRadius: '50%', width: '32px', height: '32px', color: '#94A3B8', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}>
+                <X size={18} />
               </button>
             </div>
-            <div className="p-4 flex-1 overflow-y-auto">
+            <div style={{ padding: '20px', overflowY: 'auto', flex: 1, display: 'flex', flexDirection: 'column', gap: '10px' }}>
               {menuItems.map((item) => (
-                <div key={item.id} className="flex justify-between items-center py-3 border-b last:border-0">
-                  <span className="font-medium text-gray-800">{item.name}</span>
+                <div key={item.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '12px 14px', background: '#0F172A', borderRadius: '10px', border: '1px solid #334155' }}>
+                  <span style={{ fontWeight: 700, fontSize: '0.9375rem', color: '#F8FAFC' }}>{item.title || item.name}</span>
                   <button
                     onClick={() => toggleStock(item.id, item.isAvailable)}
-                    className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
-                      item.isAvailable ? 'bg-green-500' : 'bg-red-500'
-                    }`}
+                    style={{
+                      padding: '6px 14px',
+                      borderRadius: '8px',
+                      border: 'none',
+                      fontSize: '0.8125rem',
+                      fontWeight: 800,
+                      cursor: 'pointer',
+                      background: item.isAvailable ? 'rgba(16, 185, 129, 0.2)' : 'rgba(239, 68, 68, 0.2)',
+                      color: item.isAvailable ? '#34D399' : '#F87171',
+                      borderWidth: '1px',
+                      borderStyle: 'solid',
+                      borderColor: item.isAvailable ? 'rgba(16, 185, 129, 0.4)' : 'rgba(239, 68, 68, 0.4)'
+                    }}
                   >
-                    <span
-                      className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
-                        item.isAvailable ? '-translate-x-1' : '-translate-x-6'
-                      }`}
-                    />
+                    {item.isAvailable ? 'موجود است' : 'ناموجود (86)'}
                   </button>
                 </div>
               ))}
               {menuItems.length === 0 && (
-                <div className="text-center text-gray-500 py-8">در حال بارگذاری...</div>
+                <div style={{ textAlign: 'center', color: '#94A3B8', padding: '30px 0' }}>در حال دریافت لیست آیتم‌های منو...</div>
               )}
             </div>
           </div>
