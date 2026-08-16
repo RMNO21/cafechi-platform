@@ -6,7 +6,7 @@ import { getThemeCssString, getTheme } from '@/lib/themes';
 import { useParams, useRouter } from 'next/navigation';
 import { 
   Coffee, ShoppingBag, Plus, Minus, X, ChevronDown, 
-  Bell, Receipt, Droplets, CreditCard, Star, Check 
+  Bell, Receipt, Droplets, CreditCard, Star, Check, Trash2 
 } from 'lucide-react';
 
 // --- SVGs & Components ---
@@ -388,6 +388,8 @@ export default function CafeMenuPage({ params }: { params?: Promise<{ cafeSlug: 
     FALLBACK_CAFES[initialSlug]?.categories?.[0]?.id || ''
   );
   const [cart, setCart] = useState<CartItem[]>([]);
+  const [isCartOpen, setIsCartOpen] = useState(false);
+  const [customerNotes, setCustomerNotes] = useState('');
   
   // Drawer & Modals state
   const [selectedItem, setSelectedItem] = useState<MenuItem | null>(null);
@@ -395,6 +397,29 @@ export default function CafeMenuPage({ params }: { params?: Promise<{ cafeSlug: 
   const [drawerModifiers, setDrawerModifiers] = useState<SelectedModifier[]>([]);
   const [tableHubOpen, setTableHubOpen] = useState(false);
   const [checkoutModal, setCheckoutModal] = useState<{ isOpen: boolean; type: string; orderCode?: string }>({ isOpen: false, type: '' });
+
+  const removeFromCart = (cartItemId: string) => {
+    setCart((prev) => prev.filter((item) => item.id !== cartItemId));
+  };
+
+  const updateCartQuantity = (cartItemId: string, delta: number) => {
+    setCart((prev) =>
+      prev
+        .map((item) => {
+          if (item.id === cartItemId) {
+            const newQty = item.quantity + delta;
+            return newQty > 0 ? { ...item, quantity: newQty } : null;
+          }
+          return item;
+        })
+        .filter(Boolean) as CartItem[]
+    );
+  };
+
+  const clearCart = () => {
+    setCart([]);
+    setIsCartOpen(false);
+  };
 
   const categoryRefs = useRef<Record<string, HTMLDivElement | null>>({});
   const observerRef = useRef<IntersectionObserver | null>(null);
@@ -1287,7 +1312,15 @@ export default function CafeMenuPage({ params }: { params?: Promise<{ cafeSlug: 
                         
                         <button 
                           disabled={cafe.workflowMode === 'VIEW_ONLY' || !item.isAvailable}
-                          onClick={(e) => { e.stopPropagation(); if (item.isAvailable) addToCart(item, 1); }}
+                          onClick={(e) => { 
+                            e.stopPropagation(); 
+                            if (!item.isAvailable) return;
+                            if (item.modifierGroups && item.modifierGroups.length > 0) {
+                              openDrawer(item);
+                            } else {
+                              addToCart(item, 1);
+                            }
+                          }}
                           className="cm-item-plus-btn"
                         >
                           <Plus size={18} />
@@ -1303,7 +1336,7 @@ export default function CafeMenuPage({ params }: { params?: Promise<{ cafeSlug: 
 
         {/* Cart Bottom Bar */}
         {cartCount > 0 && cafe.workflowMode !== 'VIEW_ONLY' && (
-          <div className="cm-cart-bar" onClick={handleCheckout}>
+          <div className="cm-cart-bar" onClick={() => setIsCartOpen(true)}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
               <div style={{ position: 'relative' }}>
                 <ShoppingBag size={24} />
@@ -1312,12 +1345,171 @@ export default function CafeMenuPage({ params }: { params?: Promise<{ cafeSlug: 
                 </span>
               </div>
               <div style={{ display: 'flex', flexDirection: 'column' }}>
-                <span style={{ fontSize: '11px', opacity: 0.85 }}>سبد خرید</span>
+                <span style={{ fontSize: '11px', opacity: 0.85 }}>سبد خرید شما ({cartCount} آیتم)</span>
                 <span style={{ fontWeight: 800, fontSize: '0.9375rem' }}>{cartTotal.toLocaleString()} تومان</span>
               </div>
             </div>
             <div style={{ fontWeight: 800, fontSize: '0.875rem', background: 'color-mix(in srgb, var(--theme-accent-fg) 20%, transparent)', color: 'var(--theme-accent-fg)', padding: '6px 14px', borderRadius: 'var(--theme-radius)', display: 'flex', alignItems: 'center', gap: '6px' }}>
-              تکمیل سفارش <ChevronDown size={16} style={{ transform: 'rotate(90deg)' }} />
+              مشاهده و تکمیل <ChevronDown size={16} style={{ transform: 'rotate(90deg)' }} />
+            </div>
+          </div>
+        )}
+
+        {/* Shopping Cart Drawer Sheet */}
+        {isCartOpen && (
+          <div className="cm-drawer-overlay" onClick={() => setIsCartOpen(false)}>
+            <div className="cm-drawer-sheet" onClick={(e) => e.stopPropagation()} style={{ maxHeight: '85vh', display: 'flex', flexDirection: 'column' }}>
+              {/* Header */}
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingBottom: '14px', borderBottom: '1px solid var(--theme-border)' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <ShoppingBag size={20} style={{ color: 'var(--theme-accent)' }} />
+                  <h3 style={{ fontSize: '1.125rem', fontWeight: 800, margin: 0, color: 'var(--theme-text)' }}>سبد خرید شما</h3>
+                  <span style={{ fontSize: '0.75rem', background: 'var(--theme-bg-2)', color: 'var(--theme-text-2)', padding: '2px 8px', borderRadius: 'var(--theme-radius-full, 12px)', fontWeight: 700 }}>
+                    {cartCount} آیتم
+                  </span>
+                </div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <button 
+                    onClick={clearCart} 
+                    title="پاک کردن سبد"
+                    style={{ background: 'transparent', border: 'none', color: 'var(--color-red, #EF4444)', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '4px', fontSize: '0.75rem', fontWeight: 700, padding: '4px 8px' }}
+                  >
+                    <Trash2 size={15} /> پاک کردن
+                  </button>
+                  <button onClick={() => setIsCartOpen(false)} style={{ background: 'var(--theme-bg-2)', border: 'none', borderRadius: 'var(--theme-radius-full, 50%)', width: '32px', height: '32px', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', color: 'var(--theme-text)' }}>
+                    <X size={18} />
+                  </button>
+                </div>
+              </div>
+
+              {/* Items List */}
+              <div style={{ overflowY: 'auto', flex: 1, padding: '16px 0', display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                {cart.length === 0 ? (
+                  <div style={{ textAlign: 'center', padding: '32px 0', opacity: 0.7 }}>
+                    <ShoppingBag size={40} style={{ marginBottom: '8px', opacity: 0.4 }} />
+                    <p style={{ margin: 0 }}>سبد خرید شما خالی است</p>
+                  </div>
+                ) : (
+                  cart.map((cartItem) => {
+                    const mods = cartItem.modifiers || cartItem.selectedModifiers || [];
+                    const itemUnitPrice = cartItem.price + mods.reduce((sum: number, m: SelectedModifier & { price?: number }) => sum + (m.price || m.priceDelta || 0), 0);
+                    const itemTotal = itemUnitPrice * cartItem.quantity;
+                    return (
+                      <div 
+                        key={cartItem.id} 
+                        style={{ 
+                          display: 'flex', 
+                          justifyContent: 'space-between', 
+                          alignItems: 'center', 
+                          padding: '12px 14px', 
+                          background: 'var(--theme-bg-2)', 
+                          borderRadius: 'var(--theme-radius)', 
+                          border: '1px solid var(--theme-border)' 
+                        }}
+                      >
+                        <div style={{ flex: 1, paddingLeft: '12px' }}>
+                          <div style={{ fontWeight: 800, fontSize: '0.9375rem', color: 'var(--theme-text)', marginBottom: '4px' }}>
+                            {cartItem.title || cartItem.name}
+                          </div>
+                          {mods.length > 0 && (
+                            <div style={{ fontSize: '0.75rem', color: 'var(--theme-accent)', marginBottom: '4px' }}>
+                              {mods.map(m => m.name).join(' • ')}
+                            </div>
+                          )}
+                          <div style={{ fontSize: '0.8125rem', fontWeight: 700, color: 'var(--theme-text)' }}>
+                            {itemTotal.toLocaleString()} تومان
+                          </div>
+                        </div>
+
+                        {/* Quantity Stepper & Remove */}
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', background: 'var(--theme-surface)', padding: '4px 8px', borderRadius: 'var(--theme-radius-sm, 6px)', border: '1px solid var(--theme-border)' }}>
+                            <button 
+                              onClick={() => updateCartQuantity(cartItem.id, -1)} 
+                              style={{ background: 'none', border: 'none', color: 'var(--theme-accent)', cursor: 'pointer', display: 'flex', alignItems: 'center', padding: '2px' }}
+                            >
+                              <Minus size={15} />
+                            </button>
+                            <span style={{ fontWeight: 800, fontSize: '0.875rem', minWidth: '18px', textAlign: 'center', color: 'var(--theme-text)' }}>
+                              {cartItem.quantity}
+                            </span>
+                            <button 
+                              onClick={() => updateCartQuantity(cartItem.id, 1)} 
+                              style={{ background: 'none', border: 'none', color: 'var(--theme-accent)', cursor: 'pointer', display: 'flex', alignItems: 'center', padding: '2px' }}
+                            >
+                              <Plus size={15} />
+                            </button>
+                          </div>
+                          <button 
+                            onClick={() => removeFromCart(cartItem.id)} 
+                            title="حذف آیتم"
+                            style={{ background: 'transparent', border: 'none', color: 'var(--color-red, #EF4444)', cursor: 'pointer', display: 'flex', alignItems: 'center', padding: '4px' }}
+                          >
+                            <X size={18} />
+                          </button>
+                        </div>
+                      </div>
+                    );
+                  })
+                )}
+
+                {/* Customer Order Notes Input */}
+                {cart.length > 0 && (
+                  <div style={{ marginTop: '8px' }}>
+                    <label style={{ fontSize: '0.75rem', fontWeight: 700, opacity: 0.8, display: 'block', marginBottom: '6px', color: 'var(--theme-text)' }}>
+                      توضیحات و ملاحظات سفارش (اختیاری)
+                    </label>
+                    <textarea 
+                      value={customerNotes}
+                      onChange={(e) => setCustomerNotes(e.target.value)}
+                      placeholder="مثلاً: کم‌شکر، بدون یخ، یا آلرژی خاص..."
+                      rows={2}
+                      style={{ 
+                        width: '100%', 
+                        padding: '10px 12px', 
+                        borderRadius: 'var(--theme-radius)', 
+                        border: '1px solid var(--theme-border)', 
+                        background: 'var(--theme-bg-2)', 
+                        color: 'var(--theme-text)', 
+                        fontSize: '0.8125rem',
+                        resize: 'none',
+                        outline: 'none'
+                      }}
+                    />
+                  </div>
+                )}
+              </div>
+
+              {/* Summary & Checkout CTA */}
+              {cart.length > 0 && (
+                <div style={{ paddingTop: '14px', borderTop: '1px solid var(--theme-border)' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px', fontWeight: 800 }}>
+                    <span style={{ fontSize: '0.9375rem', color: 'var(--theme-text)' }}>مجموع قابل پرداخت:</span>
+                    <span style={{ fontSize: '1.125rem', color: 'var(--theme-accent)' }}>{cartTotal.toLocaleString()} تومان</span>
+                  </div>
+                  <button 
+                    onClick={() => { setIsCartOpen(false); handleCheckout(); }}
+                    style={{ 
+                      width: '100%', 
+                      background: 'var(--theme-accent)', 
+                      color: 'var(--theme-accent-fg)', 
+                      border: 'none', 
+                      borderRadius: 'var(--theme-radius)', 
+                      padding: '14px 18px', 
+                      fontSize: '1rem', 
+                      fontWeight: 800, 
+                      display: 'flex', 
+                      alignItems: 'center', 
+                      justifyContent: 'space-between', 
+                      cursor: 'pointer', 
+                      boxShadow: 'var(--theme-card-shadow)' 
+                    }}
+                  >
+                    <span>ثبت و تکمیل سفارش</span>
+                    <ChevronDown size={18} style={{ transform: 'rotate(90deg)' }} />
+                  </button>
+                </div>
+              )}
             </div>
           </div>
         )}
