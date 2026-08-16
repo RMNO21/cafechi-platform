@@ -6,7 +6,8 @@ import { getThemeCssString, getTheme } from '@/lib/themes';
 import { useParams, useRouter } from 'next/navigation';
 import { 
   Coffee, ShoppingBag, Plus, Minus, X, ChevronDown, 
-  Bell, Receipt, Droplets, CreditCard, Star, Check, Trash2 
+  Bell, Receipt, Droplets, CreditCard, Star, Check, Trash2,
+  Sparkles, Bot, Send
 } from 'lucide-react';
 
 // --- SVGs & Components ---
@@ -397,6 +398,41 @@ export default function CafeMenuPage({ params }: { params?: Promise<{ cafeSlug: 
   const [drawerModifiers, setDrawerModifiers] = useState<SelectedModifier[]>([]);
   const [tableHubOpen, setTableHubOpen] = useState(false);
   const [checkoutModal, setCheckoutModal] = useState<{ isOpen: boolean; type: string; orderCode?: string }>({ isOpen: false, type: '' });
+
+  // AI Sommelier State
+  const [aiModalOpen, setAiModalOpen] = useState(false);
+  const [aiQuery, setAiQuery] = useState('');
+  const [aiLoading, setAiLoading] = useState(false);
+  const [aiResponse, setAiResponse] = useState<any>(null);
+  const [aiAcidity, setAiAcidity] = useState(5);
+  const [aiSweetness, setAiSweetness] = useState(5);
+  const [aiBitterness, setAiBitterness] = useState(5);
+
+  const handleAskAI = async (queryText?: string) => {
+    const activeQuery = queryText || aiQuery;
+    setAiLoading(true);
+    try {
+      const res = await fetch('/api/ai/sommelier', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          cafeSlug,
+          query: activeQuery,
+          preferences: {
+            acidity: aiAcidity,
+            sweetness: aiSweetness,
+            bitterness: aiBitterness,
+          },
+        }),
+      });
+      const data = await res.json();
+      setAiResponse(data);
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setAiLoading(false);
+    }
+  };
 
   const removeFromCart = (cartItemId: string) => {
     setCart((prev) => prev.filter((item) => item.id !== cartItemId));
@@ -1540,6 +1576,146 @@ export default function CafeMenuPage({ params }: { params?: Promise<{ cafeSlug: 
             <Bell size={22} />
           </button>
         </div>
+
+        {/* AI Sommelier Floating Button */}
+        <div style={{ position: 'fixed', bottom: '84px', left: '20px', zIndex: 45 }}>
+          <button 
+            onClick={() => { setAiModalOpen(true); if (!aiResponse) handleAskAI(); }}
+            style={{ 
+              background: 'var(--theme-accent)', 
+              color: 'var(--theme-accent-fg)', 
+              border: '1px solid var(--theme-border)', 
+              borderRadius: '50px',
+              padding: '10px 18px',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '8px',
+              fontWeight: 800,
+              fontSize: '0.875rem',
+              cursor: 'pointer',
+              boxShadow: 'var(--theme-card-shadow)'
+            }}
+          >
+            <Sparkles size={18} />
+            <span>کافه‌چی هوشمند</span>
+          </button>
+        </div>
+
+        {/* AI Sommelier Dialog Sheet */}
+        {aiModalOpen && (
+          <div className="cm-drawer-overlay" onClick={() => setAiModalOpen(false)}>
+            <div className="cm-drawer-sheet" onClick={(e) => e.stopPropagation()} style={{ maxHeight: '85vh', display: 'flex', flexDirection: 'column' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingBottom: '12px', borderBottom: '1px solid var(--theme-border)' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <div style={{ background: 'var(--theme-accent)', color: 'var(--theme-accent-fg)', padding: '6px', borderRadius: '8px' }}>
+                    <Bot size={20} />
+                  </div>
+                  <div>
+                    <h3 style={{ fontSize: '1.125rem', fontWeight: 900, margin: 0, color: 'var(--theme-text)' }}>کافه‌چی هوشمند (AI Sommelier)</h3>
+                    <span style={{ fontSize: '0.75rem', opacity: 0.75 }}>راهنمای هوشمند انتخاب قهوه و شیرینی</span>
+                  </div>
+                </div>
+                <button onClick={() => setAiModalOpen(false)} style={{ background: 'var(--theme-bg-2)', border: 'none', borderRadius: '50%', width: '32px', height: '32px', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', color: 'var(--theme-text)' }}>
+                  <X size={18} />
+                </button>
+              </div>
+
+              <div style={{ padding: '16px 0', overflowY: 'auto', flex: 1, display: 'flex', flexDirection: 'column', gap: '16px' }}>
+                {/* Taste Preferences Sliders */}
+                <div style={{ background: 'var(--theme-bg-2)', padding: '14px', borderRadius: 'var(--theme-radius)', border: '1px solid var(--theme-border)' }}>
+                  <h4 style={{ fontSize: '0.875rem', fontWeight: 800, marginBottom: '12px', color: 'var(--theme-text)' }}>مشخصات ذائقه انتخابی شما:</h4>
+                  
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                    <div>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.75rem', fontWeight: 700, marginBottom: '4px' }}>
+                        <span>اسیدیته (ترشی میوه‌ای):</span>
+                        <span>{aiAcidity}/10</span>
+                      </div>
+                      <input type="range" min="1" max="10" value={aiAcidity} onChange={(e) => setAiAcidity(Number(e.target.value))} style={{ width: '100%', accentColor: 'var(--theme-accent)' }} />
+                    </div>
+
+                    <div>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.75rem', fontWeight: 700, marginBottom: '4px' }}>
+                        <span>شیرینی:</span>
+                        <span>{aiSweetness}/10</span>
+                      </div>
+                      <input type="range" min="1" max="10" value={aiSweetness} onChange={(e) => setAiSweetness(Number(e.target.value))} style={{ width: '100%', accentColor: 'var(--theme-accent)' }} />
+                    </div>
+
+                    <div>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.75rem', fontWeight: 700, marginBottom: '4px' }}>
+                        <span>تلخی:</span>
+                        <span>{aiBitterness}/10</span>
+                      </div>
+                      <input type="range" min="1" max="10" value={aiBitterness} onChange={(e) => setAiBitterness(Number(e.target.value))} style={{ width: '100%', accentColor: 'var(--theme-accent)' }} />
+                    </div>
+                  </div>
+                </div>
+
+                {/* Natural Prompt Input */}
+                <div>
+                  <label style={{ fontSize: '0.8125rem', fontWeight: 700, marginBottom: '6px', display: 'block', color: 'var(--theme-text)' }}>
+                    یا حس و نیاز الان‌ت رو به زبان ساده بنویس:
+                  </label>
+                  <div style={{ display: 'flex', gap: '8px' }}>
+                    <input 
+                      type="text" 
+                      value={aiQuery} 
+                      onChange={(e) => setAiQuery(e.target.value)} 
+                      placeholder="مثلاً: یه نوشیدنی دمی خنک و ترش واسه عصر میزی..." 
+                      style={{ flex: 1, padding: '10px 14px', borderRadius: 'var(--theme-radius)', border: '1px solid var(--theme-border)', background: 'var(--theme-bg-2)', color: 'var(--theme-text)', fontSize: '0.875rem' }} 
+                      onKeyDown={(e) => { if (e.key === 'Enter') handleAskAI(); }}
+                    />
+                    <button 
+                      onClick={() => handleAskAI()} 
+                      disabled={aiLoading}
+                      style={{ background: 'var(--theme-accent)', color: 'var(--theme-accent-fg)', border: 'none', borderRadius: 'var(--theme-radius)', padding: '0 16px', fontWeight: 800, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '6px' }}
+                    >
+                      {aiLoading ? '...' : <Send size={16} />}
+                    </button>
+                  </div>
+                </div>
+
+                {/* AI Response Output */}
+                {aiResponse && (
+                  <div style={{ background: 'var(--theme-bg-2)', borderRadius: 'var(--theme-radius)', padding: '16px', border: '1px solid var(--theme-border)', marginTop: '8px' }}>
+                    <div style={{ fontSize: '0.875rem', lineHeight: 1.7, color: 'var(--theme-text)', marginBottom: '14px', whiteSpace: 'pre-line' }}>
+                      {aiResponse.recommendation}
+                    </div>
+
+                    {aiResponse.suggestedItems?.length > 0 && (
+                      <div>
+                        <h5 style={{ fontSize: '0.8125rem', fontWeight: 800, color: 'var(--theme-accent)', marginBottom: '8px' }}>آیتم‌های پیشنهادی AI:</h5>
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                          {aiResponse.suggestedItems.map((sItem: any) => {
+                            const fullItem = cafe?.categories?.flatMap(c => c.menuItems || []).find(i => i.id === sItem.id);
+                            return (
+                              <div key={sItem.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: 'var(--theme-surface)', padding: '10px 12px', borderRadius: 'var(--theme-radius)', border: '1px solid var(--theme-border)' }}>
+                                <div>
+                                  <div style={{ fontWeight: 800, fontSize: '0.875rem', color: 'var(--theme-text)' }}>{sItem.title}</div>
+                                  <div style={{ fontSize: '0.75rem', opacity: 0.8 }}>{sItem.price.toLocaleString()} تومان</div>
+                                </div>
+                                <button 
+                                  onClick={() => {
+                                    if (fullItem) addToCart(fullItem, 1);
+                                    setAiModalOpen(false);
+                                  }}
+                                  style={{ background: 'var(--theme-accent)', color: 'var(--theme-accent-fg)', border: 'none', padding: '6px 12px', borderRadius: 'var(--theme-radius-sm, 6px)', fontSize: '0.75rem', fontWeight: 800, cursor: 'pointer' }}
+                                >
+                                  + افزودن به سبد
+                                </button>
+                              </div>
+                            );
+                          })}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+        )}
 
         {/* Item Detail Drawer */}
         {selectedItem && (
