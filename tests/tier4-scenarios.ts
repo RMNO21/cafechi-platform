@@ -190,7 +190,7 @@ export function registerTier4Tests(): void {
           data: {
             cafeId: cafe.id,
             customerId: customer.id,
-            orderCode: `LOY-${i}-${Date.now().toString().slice(-3)}`,
+            orderCode: `LOY-${i}-${Date.now()}-${Math.floor(Math.random() * 1000)}`,
             status: "DELIVERED",
             paymentMode: "PAY_UPFRONT_BUZZER",
             paymentStatus: "PAID",
